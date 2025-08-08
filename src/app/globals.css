@@ -1,26 +1,221 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@custom-variant dark (&:is(.dark *));
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-card: #f8fafc;
+  --color-card-foreground: #0f172a;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a;
+
+  --color-primary: #0f172a;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #f8fafc;
+  --color-secondary-foreground: #0f172a;
+
+  --color-muted: #e2e8f0;
+  --color-muted-foreground: #64748b;
+
+  --color-accent: #3b82f6;
+  --color-accent-foreground: #ffffff;
+
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #fafafa;
+
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #0f172a;
+
+  --color-chart-1: #e67e22;
+  --color-chart-2: #2d8659;
+  --color-chart-3: #1e3a5f;
+  --color-chart-4: #f1c40f;
+  --color-chart-5: #e74c3c;
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Custom Palette */
+  --color-surface: #f8fafc;
+  --color-success: #10b981;
+
+  /* Font Families */
+  --font-display: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e2e8f0;
+  }
+}
+
+@layer utilities {
+  body {
+    font-family: var(--font-body);
+  }
+}
+
+@layer base {
+  :root {
+    --background: var(--color-background);
+    --foreground: var(--color-foreground);
+    --card: var(--color-card);
+    --card-foreground: var(--color-card-foreground);
+    --popover: var(--color-popover);
+    --popover-foreground: var(--color-popover-foreground);
+    --primary: var(--color-primary);
+    --primary-foreground: var(--color-primary-foreground);
+    --secondary: var(--color-secondary);
+    --secondary-foreground: var(--color-secondary-foreground);
+    --muted: var(--color-muted);
+    --muted-foreground: var(--color-muted-foreground);
+    --accent: var(--color-accent);
+    --accent-foreground: var(--color-accent-foreground);
+    --destructive: var(--color-destructive);
+    --destructive-foreground: var(--color-destructive-foreground);
+    --border: var(--color-border);
+    --input: var(--color-input);
+    --ring: var(--color-ring);
+    --chart-1: var(--color-chart-1);
+    --chart-2: var(--color-chart-2);
+    --chart-3: var(--color-chart-3);
+    --chart-4: var(--color-chart-4);
+    --chart-5: var(--color-chart-5);
+    --radius: var(--radius-lg);
+
+    /* Custom Palette Mapping */
+    --surface: var(--color-surface);
+    --success: var(--color-success);
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    line-height: 1.625; /* leading-relaxed */
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    font-weight: 700; /* font-bold */
+    letter-spacing: -0.025em; /* tracking-tight */
+    line-height: 1.2;
+    color: var(--foreground);
+  }
+
+  h1 {
+    font-size: 3rem; /* text-4xl */
+  }
+
+  h2 {
+    font-size: 1.875rem; /* text-xl */
+  }
+
+  h3 {
+    font-size: 1.5rem; /* text-lg */
+  }
+
+  p {
+    font-size: 1rem; /* text-base */
+    line-height: 1.625; /* leading-relaxed */
+    color: var(--foreground);
+  }
+
+  li {
+    font-size: 1rem; /* text-base */
+    line-height: 1.625; /* leading-relaxed */
+    color: var(--foreground);
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  small {
+    font-size: 0.875rem; /* text-sm */
+    color: var(--muted-foreground);
+  }
+
+  code,
+  pre {
+    font-family: var(--font-mono);
+  }
+
+  .container {
+    margin-inline: auto;
+    padding-inline: 2rem;
+  }
+
+  .bg-image-hero-section {
+    position: relative;
+    z-index: 0;
+    /* pastikan ada height kalau kosong */
+    min-height: 300px;
+    overflow: hidden;
+  }
+
+  .bg-image-hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/background.webp');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.2; /* atur sesuai kebutuhan */
+    z-index: -1;
+  }
 }
