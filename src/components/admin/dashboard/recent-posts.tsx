@@ -48,7 +48,10 @@ export function RecentPosts() {
               <div className='flex-1'>
                 <h4 className='font-medium'>{post.title}</h4>
                 <div className='mt-1 flex items-center gap-2'>
-                  <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
+                  <Badge
+                    variant={post.status === 'published' ? 'default' : 'outline'}
+                    className={post.status === 'published' ? '' : 'bg-orange-400 text-white'}
+                  >
                     {post.status}
                   </Badge>
                   <span className='text-muted-foreground text-sm'>{post.views} views</span>

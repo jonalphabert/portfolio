@@ -124,12 +124,12 @@ export default function BlogAdminPage() {
                       </div>
                     </div>
                     <div className='ml-4 flex items-center gap-2'>
-                      <Link href={`/blog/${post.slug}`}>
+                      <Link href={`/admin/blog/preview/${post.slug}`}>
                         <Button variant='outline' size='sm' className='cursor-pointer'>
                           <Eye className='h-4 w-4' />
                         </Button>
                       </Link>
-                      <Link href={`/admin/blog/editor?id=${post.id}`}>
+                      <Link href={`/admin/blog/editor/${post.slug}`}>
                         <Button variant='outline' size='sm' className='cursor-pointer'>
                           <Edit className='h-4 w-4' />
                         </Button>
