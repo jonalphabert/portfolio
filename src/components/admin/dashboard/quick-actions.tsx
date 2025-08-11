@@ -48,7 +48,7 @@ export function QuickActions() {
               <Link key={action.title} href={action.href}>
                 <Button
                   variant='outline'
-                  className='flex h-auto w-full cursor-alias flex-col items-start gap-2 p-4'
+                  className='flex h-auto w-full cursor-pointer flex-col items-start gap-2 p-4'
                 >
                   <div className={`rounded-lg p-2 ${action.color}`}>
                     <Icon className='h-4 w-4' />
