@@ -45,7 +45,7 @@ export default function ContactPage() {
         <div className='mb-16 text-center'>
           <h1 className='mb-6 text-4xl font-bold md:text-6xl'>Get In Touch</h1>
           <p className='text-muted-foreground mx-auto max-w-2xl text-xl'>
-            Have a project in mind or just want to chat? I'd love to hear from you. Let's connect
+            Have a project in mind or just want to chat? I&apos;d love to hear from you. Let&apos;s connect
             and build something amazing together.
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function ContactPage() {
         <div className='grid grid-cols-1 items-start gap-12 lg:grid-cols-2'>
           <div className='space-y-8'>
             <div>
-              <h2 className='mb-6 text-2xl font-bold'>Let's Connect</h2>
+              <h2 className='mb-6 text-2xl font-bold'>Let&apos;s Connect</h2>
               <div className='space-y-4'>
                 <div className='flex items-center gap-4'>
                   <Mail className='text-primary h-6 w-6' />
