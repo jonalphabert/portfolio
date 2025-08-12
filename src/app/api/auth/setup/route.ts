@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 
+interface PostgreSQLError {
+  code: string;
+  message: string;
+}
+
 export async function GET() {
   try {
     const query = 'SELECT COUNT(*) FROM user_admin';
@@ -9,19 +14,13 @@ export async function GET() {
     const hasAdmin = parseInt(result.rows[0].count) > 0;
 
     if (hasAdmin) {
-      return NextResponse.json(
-        { error: 'Admin already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: 'Admin already exists' }, { status: 409 });
     }
 
     return NextResponse.json({ message: 'Setup available' });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Setup check error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -39,12 +38,18 @@ export async function POST(request: NextRequest) {
     // Check if admin already exists
     const checkQuery = 'SELECT COUNT(*) FROM user_admin';
     const checkResult = await pool.query(checkQuery);
-    
+
     if (parseInt(checkResult.rows[0].count) > 0) {
-      return NextResponse.json(
-        { error: 'Admin already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: 'Admin already exists' }, { status: 409 });
+    }
+
+    const checkExist = await pool.query(
+      'SELECT * FROM user_admin WHERE username = $1 OR email = $2',
+      [username, email]
+    );
+
+    if (checkExist.rows.length > 0) {
+      return NextResponse.json({ error: 'Username or email already exists' }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -63,22 +68,11 @@ export async function POST(request: NextRequest) {
       user: {
         id: user.user_id,
         username: user.username,
-        email: user.email
-      }
+        email: user.email,
+      },
     });
-
-  } catch (error: any) {
-    if (error.code === '23505') {
-      return NextResponse.json(
-        { error: 'Username or email already exists' },
-        { status: 409 }
-      );
-    }
-    
+  } catch (error: unknown) {
     console.error('Setup error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

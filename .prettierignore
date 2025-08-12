@@ -3,3 +3,7 @@ node_modules
 public
 dist
 *.min.js 
+
+# .prettierignore
+src/**/*.ts
+src/**/*.tsx
