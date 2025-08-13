@@ -24,6 +24,11 @@ interface Post {
     username: string;
     email: string;
   };
+  categories: {
+    category_id: string;
+    category_name: string;
+    category_slug: string;
+  }[];
   thumbnail?: {
     image_id: string;
     image_path: string;
@@ -201,8 +206,17 @@ export default function BlogAdminList() {
                           </Badge>
                         </div>
                         <p className='text-muted-foreground mb-3 line-clamp-2'>
-                          {post.blog_description}
+                          {post.blog_description || getDescription(post.blog_content)}
                         </p>
+                        {post.categories && post.categories.length > 0 && (
+                          <div className='flex flex-wrap gap-1 mb-2'>
+                            {post.categories.map((category) => (
+                              <Badge key={category.category_id} variant="outline" className="text-xs">
+                                {category.category_name}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                         <div className='text-muted-foreground flex items-center gap-4 text-sm'>
                           <div className='flex items-center gap-1'>
                             <User className='h-4 w-4' />

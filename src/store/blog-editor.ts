@@ -6,6 +6,7 @@ export interface BlogPost {
   content: string;
   excerpt: string;
   category: string;
+  categoryData: { category_id: string; category_name: string; category_slug: string }[];
   tags: string;
   thumbnail: File | null;
   isPublished: boolean;
@@ -55,6 +56,7 @@ const initialBlogPost: BlogPost = {
     '# Welcome to the Blog Editor\n\nStart writing your **markdown** content here!\n\n## Features\n\n- Bold text with **double asterisks**\n- Italic text with *single asterisks*\n- `Inline code` with backticks\n- [Links](https://example.com)\n- ![Images](https://via.placeholder.com/300x200)\n\n```javascript\n// Code blocks\nconst hello = "world";\nconsole.log(hello);\n```',
   excerpt: '',
   category: '',
+  categoryData: [],
   tags: '',
   thumbnail: null,
   isPublished: false,
@@ -68,11 +70,22 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
   isLoading: false,
 
   updateTitle: (title) => {
-    const slug = get().generateSlug(title);
-    set((state) => ({
-      blogPost: { ...state.blogPost, title, slug },
-    }));
-    get().checkSlugAvailability(slug);
+    const { blogPost } = get();
+    const isEditMode = blogPost.isDraft || blogPost.isPublished;
+    
+    if (isEditMode) {
+      // Edit mode: don't change slug
+      set((state) => ({
+        blogPost: { ...state.blogPost, title },
+      }));
+    } else {
+      // New post: auto-generate slug
+      const slug = get().generateSlug(title);
+      set((state) => ({
+        blogPost: { ...state.blogPost, title, slug },
+      }));
+      get().checkSlugAvailability(slug);
+    }
     get().saveDraftToSession();
   },
 
@@ -139,8 +152,9 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
           title: data.blog_title || '',
           slug: data.blog_slug || '',
           content: data.blog_content || '',
-          excerpt: '', // You might want to add excerpt to your API
-          category: (data.blog_tags && data.blog_tags[0]) || '', // Use first tag as category
+          excerpt: data.blog_description || '',
+          category: data.categories ? data.categories.map((c: { category_id: string; category_name: string; category_slug: string }) => c.category_id).join(',') : '',
+          categoryData: data.categories || [],
           tags: (data.blog_tags && data.blog_tags.join(', ')) || '',
           thumbnail: null, // File object can't be reconstructed from API
           isPublished: data.blog_status === 'published',
@@ -201,21 +215,25 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
       }
       
       const userId = authStore.user.user_id;
+      
+      // Detect if this is an edit (existing blog) or create (new blog)
+      const isEdit = blogPost.isDraft || blogPost.isPublished;
 
-      // Save blog post with categories and thumbnail in single call
+      // Prepare data for API
       const postData = {
         title: blogPost.title,
-        slug: blogPost.slug,
         content: blogPost.content,
-        tags: blogPost.tags ? blogPost.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         blog_description: blogPost.excerpt,
-        user_id: userId,
-        category_ids: blogPost.category ? blogPost.category.split(',').filter(Boolean) : [],
+        tags: blogPost.tags ? blogPost.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
         thumbnail_image_id: thumbnailImageId,
+        ...(isEdit 
+          ? { category_ids: blogPost.category ? blogPost.category.split(',').filter(Boolean) : [] } 
+          : { slug: blogPost.slug, user_id: userId }
+        )
       };
 
-      const response = await fetch('/api/post', {
-        method: 'POST',
+      const response = await fetch(isEdit ? `/api/post/${blogPost.slug}` : '/api/post', {
+        method: isEdit ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -224,6 +242,23 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
 
       if (response.ok) {
         const result = await response.json();
+        
+        // Insert categories after getting the blog_id from result
+        if (blogPost.category && result.blog_id) {
+          const categoryIds = blogPost.category.split(',').filter(Boolean);
+          for (const categoryId of categoryIds) {
+            await fetch('/api/post/category', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                blog_id: result.blog_id,
+                category_id: categoryId,
+              }),
+            });
+          }
+        }
 
         set((state) => ({
           blogPost: { ...state.blogPost, isDraft: true },

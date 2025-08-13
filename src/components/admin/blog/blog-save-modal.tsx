@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -26,7 +26,23 @@ export function BlogSaveModal() {
   } = useBlogEditor();
   
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
   const router = useRouter();
+
+  // Load existing thumbnail when modal opens
+  useEffect(() => {
+    if (isSaveModalOpen && blogPost.slug) {
+      // Fetch blog data to get thumbnail URL
+      fetch(`/api/post/${blogPost.slug}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.thumbnail) {
+            setExistingThumbnailUrl(data.thumbnail.image_path);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isSaveModalOpen, blogPost.slug]);
 
   const handleSave = async () => {
     const success = await saveDraft();
@@ -36,9 +52,15 @@ export function BlogSaveModal() {
   };
 
   const handleTitleChange = (newTitle: string) => {
-    const newSlug = generateSlug(newTitle);
-    updateBlogData({ title: newTitle, slug: newSlug });
-    checkSlugAvailability(newSlug);
+    if (isEditMode) {
+      // Edit mode: don't change slug
+      updateBlogData({ title: newTitle });
+    } else {
+      // New post: auto-generate slug
+      const newSlug = generateSlug(newTitle);
+      updateBlogData({ title: newTitle, slug: newSlug });
+      checkSlugAvailability(newSlug);
+    }
   };
 
   const handleSlugChange = (newSlug: string) => {
@@ -46,6 +68,8 @@ export function BlogSaveModal() {
     updateBlogData({ slug: cleanSlug });
     checkSlugAvailability(cleanSlug);
   };
+
+  const isEditMode = blogPost.isDraft || blogPost.isPublished;
 
   const handleThumbnailChange = (file: File) => {
     updateBlogData({ thumbnail: file });
@@ -79,8 +103,10 @@ export function BlogSaveModal() {
                 placeholder='blog-url-slug'
                 value={blogPost.slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
+                readOnly={isEditMode}
+                className={isEditMode ? 'bg-muted cursor-not-allowed' : ''}
               />
-              {blogPost.slug && (
+              {blogPost.slug && !isEditMode && (
                 <p className={`text-sm mt-1 ${
                   slugAvailable === null 
                     ? 'text-muted-foreground' 
@@ -88,9 +114,9 @@ export function BlogSaveModal() {
                     ? 'text-green-600' 
                     : 'text-red-600'
                 }`}>
-                  {slugAvailable === null 
+                  {slugAvailable === null
                     ? 'Checking availability...' 
-                    : slugAvailable 
+                    : slugAvailable || isEditMode
                     ? '✓ Slug is available' 
                     : '✗ Slug is already taken'
                   }
@@ -149,15 +175,17 @@ export function BlogSaveModal() {
                     }}
                   />
                 </label>
-                {blogPost.thumbnail && (
+                {blogPost.thumbnail ? (
                   <p className='text-muted-foreground mt-2 text-sm'>Selected: {blogPost.thumbnail.name}</p>
-                )}
+                ) : existingThumbnailUrl ? (
+                  <p className='text-muted-foreground mt-2 text-sm'>Current thumbnail (click to change)</p>
+                ) : null}
               </div>
 
-              {thumbnailPreview && (
+              {(thumbnailPreview || existingThumbnailUrl) && (
                 <div className='h-32 w-32 overflow-hidden rounded-lg border'>
                   <Image
-                    src={thumbnailPreview}
+                    src={thumbnailPreview || existingThumbnailUrl || ''}
                     alt='Thumbnail preview'
                     width={128}
                     height={128}

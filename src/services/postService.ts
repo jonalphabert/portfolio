@@ -17,6 +17,11 @@ export interface Post {
     username: string;
     email: string;
   };
+  categories: {
+    category_id: string;
+    category_name: string;
+    category_slug: string;
+  }[];
   thumbnail?: {
     image_id: string;
     image_path: string;
@@ -38,7 +43,10 @@ export interface CreatePostData {
 export interface UpdatePostData {
   title?: string;
   content?: string;
+  blog_description?: string;
   tags?: string[];
+  category_ids?: string[];
+  thumbnail_image_id?: string;
 }
 
 export interface PostFilters {
@@ -59,10 +67,22 @@ export class PostService {
         b.blog_status, b.blog_views, b.blog_likes, b.thumbnail_id, b.created_at, 
         b.published_at, b.updated_at,
         u.username, u.email,
-        i.image_id, i.image_path, i.image_alt
+        i.image_id, i.image_path, i.image_alt,
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'category_id', c.category_id,
+              'category_name', c.category_name,
+              'category_slug', c.category_slug
+            )
+          ) FILTER (WHERE c.category_id IS NOT NULL), 
+          '[]'
+        ) as categories
       FROM blog b
       JOIN user_admin u ON b.blog_user_id = u.user_id
       LEFT JOIN image_uploaded i ON b.thumbnail_id = i.image_id
+      LEFT JOIN blog_category bc ON b.blog_id = bc.blog_id
+      LEFT JOIN category c ON bc.category_id = c.category_id AND c.deleted_at IS NULL
       WHERE b.deleted_at IS NULL
     `;
 
@@ -85,7 +105,8 @@ export class PostService {
       paramIndex++;
     }
 
-    query += ` ORDER BY b.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    query += ` GROUP BY b.blog_id, u.username, u.email, i.image_id, i.image_path, i.image_alt
+               ORDER BY b.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
     const result = await pool.query(query, params);
@@ -99,11 +120,24 @@ export class PostService {
         b.blog_status, b.blog_views, b.blog_likes, b.thumbnail_id, b.created_at, 
         b.published_at, b.updated_at,
         u.username, u.email,
-        i.image_id, i.image_path, i.image_alt
+        i.image_id, i.image_path, i.image_alt,
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'category_id', c.category_id,
+              'category_name', c.category_name,
+              'category_slug', c.category_slug
+            )
+          ) FILTER (WHERE c.category_id IS NOT NULL), 
+          '[]'
+        ) as categories
       FROM blog b
       JOIN user_admin u ON b.blog_user_id = u.user_id
       LEFT JOIN image_uploaded i ON b.thumbnail_id = i.image_id
+      LEFT JOIN blog_category bc ON b.blog_id = bc.blog_id
+      LEFT JOIN category c ON bc.category_id = c.category_id AND c.deleted_at IS NULL
       WHERE b.blog_slug = $1 AND b.deleted_at IS NULL
+      GROUP BY b.blog_id, u.username, u.email, i.image_id, i.image_path, i.image_alt
     `;
 
     const result = await pool.query(query, [slug]);
@@ -157,40 +191,89 @@ export class PostService {
   }
 
   static async updatePost(slug: string, data: UpdatePostData) {
-    const fields = [];
-    const params = [];
-    let paramIndex = 1;
+    const client = await pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      const fields = [];
+      const params = [];
+      let paramIndex = 1;
 
-    if (data.title) {
-      fields.push(`blog_title = $${paramIndex}`);
-      params.push(data.title);
-      paramIndex++;
+      if (data.title) {
+        fields.push(`blog_title = $${paramIndex}`);
+        params.push(data.title);
+        paramIndex++;
+      }
+
+      if (data.content) {
+        fields.push(`blog_content = $${paramIndex}`);
+        params.push(data.content);
+        paramIndex++;
+      }
+      
+      if (data.blog_description !== undefined) {
+        fields.push(`blog_description = $${paramIndex}`);
+        params.push(data.blog_description);
+        paramIndex++;
+      }
+
+      if (data.tags) {
+        fields.push(`blog_tags = $${paramIndex}`);
+        params.push(data.tags);
+        paramIndex++;
+      }
+      
+      if (data.thumbnail_image_id !== undefined) {
+        fields.push(`thumbnail_id = $${paramIndex}`);
+        params.push(data.thumbnail_image_id);
+        paramIndex++;
+      }
+
+      if (fields.length === 0) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+
+      const query = `
+        UPDATE blog 
+        SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+        WHERE blog_slug = $${paramIndex} AND deleted_at IS NULL
+        RETURNING blog_id, blog_title, blog_slug, blog_status, updated_at
+      `;
+
+      params.push(slug);
+      const result = await client.query(query, params);
+      const blog = result.rows[0];
+      
+      if (!blog) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      
+      // Update categories if provided
+      if (data.category_ids) {
+        // Delete existing categories
+        await client.query('DELETE FROM blog_category WHERE blog_id = $1', [blog.blog_id]);
+        
+        // Insert new categories
+        for (const categoryId of data.category_ids) {
+          await client.query(
+            'INSERT INTO blog_category (blog_id, category_id) VALUES ($1, $2)',
+            [blog.blog_id, categoryId]
+          );
+        }
+      }
+      
+      await client.query('COMMIT');
+      return blog;
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
-
-    if (data.content) {
-      fields.push(`blog_content = $${paramIndex}`);
-      params.push(data.content);
-      paramIndex++;
-    }
-
-    if (data.tags) {
-      fields.push(`blog_tags = $${paramIndex}`);
-      params.push(data.tags);
-      paramIndex++;
-    }
-
-    if (fields.length === 0) return null;
-
-    const query = `
-      UPDATE blog 
-      SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
-      WHERE blog_slug = $${paramIndex} AND deleted_at IS NULL
-      RETURNING blog_id, blog_title, blog_slug, blog_status, updated_at
-    `;
-
-    params.push(slug);
-    const result = await pool.query(query, params);
-    return result.rows[0] || null;
   }
 
   static async updatePostStatus(slug: string, status: 'draft' | 'published' | 'archived') {
@@ -235,6 +318,7 @@ export class PostService {
         username: row.username,
         email: row.email
       },
+      categories: Array.isArray(row.categories) ? row.categories : [],
       ...(row.image_id && {
         thumbnail: {
           image_id: row.image_id,
