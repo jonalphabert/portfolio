@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Upload, Save } from 'lucide-react';
 import { useBlogEditor } from '@/store/blog-editor';
+import { CategoryCombobox } from '@/components/admin/blog/CategoryCombobox';
 
 export function BlogSaveModal() {
   const { 
     blogPost, 
     isSaveModalOpen, 
     slugAvailable, 
+    isLoading,
     updateBlogData, 
     generateSlug, 
     checkSlugAvailability, 
@@ -23,6 +26,14 @@ export function BlogSaveModal() {
   } = useBlogEditor();
   
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleSave = async () => {
+    const success = await saveDraft();
+    if (success) {
+      router.push('/admin/blog');
+    }
+  };
 
   const handleTitleChange = (newTitle: string) => {
     const newSlug = generateSlug(newTitle);
@@ -51,7 +62,7 @@ export function BlogSaveModal() {
         <div className='space-y-6'>
           <div className='space-y-4'>
             <div>
-              <Label htmlFor='title'>Blog Title</Label>
+              <Label className="mb-2" htmlFor='title'>Blog Title</Label>
               <Input
                 id='title'
                 placeholder='Enter blog title...'
@@ -62,7 +73,7 @@ export function BlogSaveModal() {
             </div>
             
             <div>
-              <Label htmlFor='slug'>Blog Slug</Label>
+              <Label className="mb-2" htmlFor='slug'>Blog Slug</Label>
               <Input
                 id='slug'
                 placeholder='blog-url-slug'
@@ -87,18 +98,15 @@ export function BlogSaveModal() {
               )}
             </div>
           </div>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div className='space-y-4'>
+            <CategoryCombobox
+              value={blogPost.category ? blogPost.category.split(',').map(c => c.trim()).filter(Boolean) : []}
+              onValueChange={(value) => updateBlogData({ category: value.join(',') })}
+              placeholder="Select or create categories..."
+            />
+            
             <div>
-              <Label htmlFor='category'>Category</Label>
-              <Input
-                id='category'
-                placeholder='e.g. React, JavaScript'
-                value={blogPost.category}
-                onChange={(e) => updateBlogData({ category: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor='tags'>Tags</Label>
+              <Label className="mb-2" htmlFor='tags'>Tags</Label>
               <Input
                 id='tags'
                 placeholder='comma separated tags'
@@ -109,7 +117,7 @@ export function BlogSaveModal() {
           </div>
 
           <div>
-            <Label htmlFor='excerpt'>Excerpt</Label>
+            <Label className="mb-2" htmlFor='excerpt'>Excerpt</Label>
             <Textarea
               id='excerpt'
               placeholder='Brief description of your blog post...'
@@ -120,7 +128,7 @@ export function BlogSaveModal() {
           </div>
 
           <div>
-            <Label>Featured Image/Thumbnail</Label>
+            <Label className="mb-2">Featured Image/Thumbnail</Label>
             <div className='flex items-start gap-4'>
               <div className='flex-1'>
                 <label className='border-border hover:bg-muted/50 flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed'>
@@ -164,9 +172,12 @@ export function BlogSaveModal() {
             <Button variant='outline' onClick={closeSaveModal}>
               Cancel
             </Button>
-            <Button onClick={saveDraft} disabled={!blogPost.slug || slugAvailable === false}>
+            <Button 
+              onClick={handleSave} 
+              disabled={!blogPost.title || !blogPost.slug || slugAvailable === false || isLoading}
+            >
               <Save className='mr-2 h-4 w-4' />
-              Save Draft
+              {isLoading ? 'Saving...' : 'Save Draft'}
             </Button>
           </div>
         </div>
