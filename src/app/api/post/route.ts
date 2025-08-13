@@ -8,17 +8,22 @@ export async function GET(request: NextRequest) {
     const filters = {
       category: searchParams.get('category') || undefined,
       status: searchParams.get('status') as 'draft' | 'published' | 'archived' || undefined,
+      search: searchParams.get('search') || undefined,
+      sort: searchParams.get('sort') || 'latest',
       page: parseInt(searchParams.get('page') || '1'),
       limit: parseInt(searchParams.get('limit') || '10')
     };
 
-    const posts = await PostService.getPosts(filters);
+    const { posts, total } = await PostService.getPosts(filters);
     
     return NextResponse.json({
       posts,
+      total,
       pagination: {
         page: filters.page,
-        limit: filters.limit
+        limit: filters.limit,
+        total,
+        totalPages: Math.ceil(total / filters.limit)
       }
     });
   } catch (error: unknown) {

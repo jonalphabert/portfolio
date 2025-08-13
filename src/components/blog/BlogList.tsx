@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, Calendar, Clock, ArrowRight, Filter, User } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useDebounce } from '@/hooks/useDebounce';
 
-const POSTS_PER_PAGE = 9;
+const POSTS_PER_PAGE = 6;
 
 const categories = [
   'All',
@@ -35,6 +37,7 @@ interface Post {
   blog_status: string;
   blog_views: number;
   blog_likes: number;
+  blog_description: string;
   created_at: string;
   published_at: string | null;
   updated_at: string;
@@ -56,53 +59,39 @@ export default function BlogList() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('latest');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
+  
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async (page = 1, search = '', sort = 'latest', category = 'All') => {
     try {
       setLoading(true);
-      const response = await fetch('/api/post?status=published&limit=50');
+      const params = new URLSearchParams({
+        status: 'published',
+        limit: POSTS_PER_PAGE.toString(),
+        page: page.toString(),
+        sort: sort,
+        ...(search && { search }),
+        ...(category !== 'All' && { category })
+      });
+      
+      const response = await fetch(`/api/post?${params}`);
       const data = await response.json();
+      console.log(data)
       setPosts(data.posts || []);
+      setTotalPosts(data.total || 0);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filteredAndSortedPosts = useMemo(() => {
-    const filtered = posts.filter((post) => {
-      const matchesSearch =
-        post.blog_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.blog_content.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || post.blog_tags.includes(selectedCategory);
-      return matchesSearch && matchesCategory;
-    });
+  useEffect(() => {
+    fetchPosts(currentPage, debouncedSearchQuery, sortBy, selectedCategory);
+  }, [fetchPosts, currentPage, debouncedSearchQuery, sortBy, selectedCategory]);
 
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'oldest':
-          return new Date(a.published_at || a.created_at).getTime() - new Date(b.published_at || b.created_at).getTime();
-        case 'popular':
-          return b.blog_views - a.blog_views;
-        case 'latest':
-        default:
-          return new Date(b.published_at || b.created_at).getTime() - new Date(a.published_at || a.created_at).getTime();
-      }
-    });
-
-    return filtered;
-  }, [posts, searchQuery, selectedCategory, sortBy]);
-
-  const totalPages = Math.ceil(filteredAndSortedPosts.length / POSTS_PER_PAGE);
-  const paginatedPosts = filteredAndSortedPosts.slice(
-    (currentPage - 1) * POSTS_PER_PAGE,
-    currentPage * POSTS_PER_PAGE
-  );
+  const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -193,28 +182,13 @@ export default function BlogList() {
               </select>
             </div>
           </div>
-
-          {/* Category Filters */}
-          <div className='mt-6 flex flex-wrap gap-2'>
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size='sm'
-                onClick={() => handleCategoryChange(category)}
-                className='transition-all duration-200'
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
         </div>
       </section>
 
       {/* Blog Posts Grid */}
       <section className='py-16'>
         <div className='container mx-auto max-w-6xl px-6'>
-          {paginatedPosts.length === 0 ? (
+          {posts.length === 0 ? (
             <div className='py-12 text-center'>
               <p className='text-muted-foreground'>
                 No articles found matching your search criteria.
@@ -223,102 +197,125 @@ export default function BlogList() {
           ) : (
             <>
               <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
-                {paginatedPosts.map((post) => (
+                {posts.map((post) => (
                   <Card
                     key={post.blog_id}
                     className='group overflow-hidden py-0 transition-all duration-300 hover:shadow-lg'
                   >
-                    <div className='relative overflow-hidden'>
-                      <img
-                        src={post.thumbnail?.image_path || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop'}
-                        alt={post.thumbnail?.image_alt || post.blog_title}
-                        className='h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105'
-                      />
-                      <div className='absolute top-3 left-3'>
-                        <Badge variant='secondary' className='bg-background/90 backdrop-blur-sm'>
-                          {post.blog_tags[0] || 'Article'}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className='p-6'>
-                      <div className='text-muted-foreground mb-3 flex items-center gap-4 text-sm'>
-                        <div className='flex items-center gap-1'>
-                          <Calendar className='h-3 w-3' />
-                          {formatDate(post.published_at || post.created_at)}
-                        </div>
-                        <div className='flex items-center gap-1'>
-                          <Clock className='h-3 w-3' />
-                          {getReadTime(post.blog_content)}
+                    <Link href={`/blog/${post.blog_slug}`} className='group-hover:text-accent'>
+                      <div className='relative overflow-hidden'>
+                        <Image
+                          src={post.thumbnail?.image_path || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop'}
+                        width={400}
+                        height={192}
+                          alt={post.thumbnail?.image_alt || post.blog_title}
+                          className='h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105'
+                        />
+                        <div className='absolute top-3 left-3'>
+                          <Badge variant='secondary' className='bg-background/90 backdrop-blur-sm'>
+                            {post.blog_tags[0] || 'Article'}
+                          </Badge>
                         </div>
                       </div>
 
-                      <h3 className='group-hover:text-accent mb-3 text-xl font-semibold transition-colors duration-200'>
-                        {post.blog_title}
-                      </h3>
-
-                      <p className='text-muted-foreground mb-4 line-clamp-2'>
-                        {getExcerpt(post.blog_content)}
-                      </p>
-
-                      <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2'>
-                          <User className='text-muted-foreground h-4 w-4' />
-                          <span className='text-muted-foreground text-sm'>{post.author.username}</span>
+                      <div className='p-6'>
+                        <div className='text-muted-foreground mb-3 flex items-center gap-4 text-sm'>
+                          <div className='flex items-center gap-1'>
+                            <Calendar className='h-3 w-3' />
+                            {formatDate(post.published_at || post.created_at)}
+                          </div>
+                          <div className='flex items-center gap-1'>
+                            <Clock className='h-3 w-3' />
+                            {getReadTime(post.blog_content)}
+                          </div>
                         </div>
 
-                        <Link href={`/blog/${post.blog_slug}`}>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            className='group/button text-accent hover:text-accent-foreground h-auto p-0 font-medium'
-                          >
-                            Read More
-                            <ArrowRight className='ml-1 h-3 w-3 transition-transform duration-200 group-hover/button:translate-x-1' />
-                          </Button>
-                        </Link>
+                        <h3 className='group-hover:text-accent mb-3 text-xl font-semibold transition-colors duration-200'>
+                          {post.blog_title}
+                        </h3>
+
+                        <p className='text-muted-foreground mb-4 line-clamp-2'>
+                          {getExcerpt(post.blog_description)}
+                        </p>
+
+                        <div className='flex items-center justify-between'>
+                          <div className='flex items-center gap-2'>
+                            <User className='text-muted-foreground h-4 w-4' />
+                            <span className='text-muted-foreground text-sm'>{post.author.username}</span>
+                          </div>
+
+                          <Link href={`/blog/${post.blog_slug}`}>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              className='group/button text-accent hover:text-accent-foreground h-auto p-0 font-medium'
+                            >
+                              Read More
+                              <ArrowRight className='ml-1 h-3 w-3 transition-transform duration-200 group-hover/button:translate-x-1' />
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   </Card>
                 ))}
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className='mt-12 flex items-center justify-center gap-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-
-                  <div className='flex gap-1'>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? 'default' : 'outline'}
-                        size='sm'
-                        onClick={() => setCurrentPage(page)}
-                        className='h-8 w-8 p-0'
-                      >
-                        {page}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </Button>
+              <div className='mt-12 flex flex-col items-center gap-4'>
+                <div className='text-sm text-muted-foreground'>
+                  Showing {posts.length} of {totalPosts} posts
                 </div>
-              )}
+                
+                {totalPages > 1 && (
+                  <div className='flex items-center justify-center gap-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+
+                    <div className='flex gap-1'>
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? 'default' : 'outline'}
+                            size='sm'
+                            onClick={() => setCurrentPage(pageNum)}
+                            className='h-8 w-8 p-0'
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>

@@ -52,13 +52,15 @@ export interface UpdatePostData {
 export interface PostFilters {
   category?: string;
   status?: 'draft' | 'published' | 'archived';
+  search?: string;
+  sort?: string;
   page?: number;
   limit?: number;
 }
 
 export class PostService {
   static async getPosts(filters: PostFilters = {}) {
-    const { category, status, page = 1, limit = 10 } = filters;
+    const { category, status, search, sort = 'latest', page = 1, limit = 10 } = filters;
     const offset = (page - 1) * limit;
 
     let query = `
@@ -105,12 +107,74 @@ export class PostService {
       paramIndex++;
     }
 
-    query += ` GROUP BY b.blog_id, u.username, u.email, i.image_id, i.image_path, i.image_alt
-               ORDER BY b.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    if (search) {
+      query += ` AND (b.blog_title ILIKE $${paramIndex} OR b.blog_content ILIKE $${paramIndex} OR b.blog_description ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    query += ` GROUP BY b.blog_id, u.username, u.email, i.image_id, i.image_path, i.image_alt`;
+
+    // Add sorting
+    switch (sort) {
+      case 'oldest':
+        query += ` ORDER BY b.created_at ASC`;
+        break;
+      case 'popular':
+        query += ` ORDER BY b.blog_views DESC`;
+        break;
+      case 'latest':
+      default:
+        query += ` ORDER BY b.created_at DESC`;
+        break;
+    }
+
+    // Get total count with separate simpler query
+    let countQuery = `
+      SELECT COUNT(DISTINCT b.blog_id) as total
+      FROM blog b
+      JOIN user_admin u ON b.blog_user_id = u.user_id
+      LEFT JOIN blog_category bc ON b.blog_id = bc.blog_id
+      LEFT JOIN category c ON bc.category_id = c.category_id AND c.deleted_at IS NULL
+      WHERE b.deleted_at IS NULL
+    `;
+    
+    const countParams: any[] = [];
+    let countParamIndex = 1;
+    
+    if (status) {
+      countQuery += ` AND b.blog_status = $${countParamIndex}`;
+      countParams.push(status);
+      countParamIndex++;
+    }
+
+    if (category) {
+      countQuery += ` AND EXISTS (
+        SELECT 1 FROM blog_category bc2 
+        JOIN category c2 ON bc2.category_id = c2.category_id 
+        WHERE bc2.blog_id = b.blog_id AND c2.category_slug = $${countParamIndex}
+      )`;
+      countParams.push(category);
+      countParamIndex++;
+    }
+
+    if (search) {
+      countQuery += ` AND (b.blog_title ILIKE $${countParamIndex} OR b.blog_content ILIKE $${countParamIndex} OR b.blog_description ILIKE $${countParamIndex})`;
+      countParams.push(`%${search}%`);
+      countParamIndex++;
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Add pagination
+    query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
     const result = await pool.query(query, params);
-    return result.rows.map(this.mapRowToPost);
+    const posts = result.rows.map(this.mapRowToPost);
+
+    return { posts, total };
   }
 
   static async getPostBySlug(slug: string) {
@@ -279,10 +343,10 @@ export class PostService {
   static async updatePostStatus(slug: string, status: 'draft' | 'published' | 'archived') {
     const query = `
       UPDATE blog 
-      SET blog_status = $1, 
-          published_at = CASE WHEN $1 = 'published' THEN CURRENT_TIMESTAMP ELSE published_at END,
+      SET blog_status = $1::VARCHAR, 
+          published_at = CASE WHEN $1::VARCHAR = 'published' THEN CURRENT_TIMESTAMP ELSE published_at END,
           updated_at = CURRENT_TIMESTAMP
-      WHERE blog_slug = $2 AND deleted_at IS NULL
+      WHERE blog_slug = $2::VARCHAR AND deleted_at IS NULL
       RETURNING blog_id, blog_title, blog_slug, blog_status, published_at, updated_at
     `;
 
@@ -298,6 +362,77 @@ export class PostService {
     const query = 'SELECT blog_id FROM blog WHERE blog_slug = $1 AND deleted_at IS NULL';
     const result = await pool.query(query, [slug]);
     return result.rows.length === 0;
+  }
+
+  static async getRelatedPosts(currentSlug: string, limit: number = 3) {
+    const query = `
+      WITH current_post AS (
+        SELECT 
+          ARRAY_AGG(DISTINCT bc.category_id) FILTER (WHERE bc.category_id IS NOT NULL) AS category_ids,
+          b.blog_tags
+        FROM blog b
+        LEFT JOIN blog_category bc ON b.blog_id = bc.blog_id
+        WHERE b.blog_slug = $1 AND b.deleted_at IS NULL
+        GROUP BY b.blog_id, b.blog_tags
+      ),
+      blog_with_categories AS (
+        SELECT 
+          b.blog_id, b.blog_title, b.blog_slug, b.blog_content, b.blog_description, b.blog_tags,
+          b.blog_status, b.blog_views, b.blog_likes, b.thumbnail_id, b.created_at, 
+          b.published_at, b.updated_at,
+          u.username, u.email,
+          i.image_id, i.image_path, i.image_alt,
+          COALESCE(
+            JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'category_id', c.category_id,
+                'category_name', c.category_name,
+                'category_slug', c.category_slug
+              )
+            ) FILTER (WHERE c.category_id IS NOT NULL), 
+            '[]'
+          ) AS categories,
+          ARRAY_AGG(DISTINCT bc2.category_id) FILTER (WHERE bc2.category_id IS NOT NULL) AS all_category_ids
+        FROM blog b
+        JOIN user_admin u ON b.blog_user_id = u.user_id
+        LEFT JOIN image_uploaded i ON b.thumbnail_id = i.image_id
+        LEFT JOIN blog_category bc2 ON b.blog_id = bc2.blog_id
+        LEFT JOIN category c ON bc2.category_id = c.category_id AND c.deleted_at IS NULL
+        WHERE b.blog_slug != $1 
+          AND b.blog_status = 'published' 
+          AND b.deleted_at IS NULL
+        GROUP BY b.blog_id, u.username, u.email, i.image_id, i.image_path, i.image_alt
+      ),
+      ranking_calc AS (
+        SELECT 
+          bwc.*,
+          (
+            -- Category matching
+            COALESCE(cat_match.match_count * 3, 0) +
+            -- Tag matching
+            COALESCE(tag_match.match_count, 0)
+          ) AS ranking
+        FROM blog_with_categories bwc
+        CROSS JOIN current_post cp
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*) AS match_count
+          FROM unnest(bwc.all_category_ids) AS post_cat
+          WHERE post_cat = ANY(cp.category_ids)
+        ) AS cat_match ON TRUE
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*) AS match_count
+          FROM unnest(bwc.blog_tags) AS post_tag
+          WHERE post_tag = ANY(cp.blog_tags)
+        ) AS tag_match ON TRUE
+      )
+      SELECT *
+      FROM ranking_calc
+      ORDER BY ranking DESC, created_at DESC
+      LIMIT $2;
+    `;
+
+    const result = await pool.query(query, [currentSlug, limit]);
+    return result.rows.map(this.mapRowToPost);
   }
 
   private static mapRowToPost(row: any): Post {
