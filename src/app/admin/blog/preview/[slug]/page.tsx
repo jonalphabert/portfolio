@@ -9,7 +9,6 @@ import { useBlogEditor } from '@/store/blog-editor';
 export default function BlogPreviewPage({ params }: { params: Promise<{ slug: string }> }) {
   const { blogPost, publishPost, loadBlogBySlug, isLoading } = useBlogEditor();
   const resolvedParams = React.use(params);
-
   // Load blog data if slug exists and no data in store
   React.useEffect(() => {
     if (resolvedParams.slug && (!blogPost.title || blogPost.slug !== resolvedParams.slug)) {
@@ -33,27 +32,6 @@ export default function BlogPreviewPage({ params }: { params: Promise<{ slug: st
     notFound();
   }
 
-  // Get thumbnail URL from existing blog data
-  const [thumbnailUrl, setThumbnailUrl] = React.useState<string | null>(null);
-  
-  React.useEffect(() => {
-    const loadThumbnail = async () => {
-      if (blogPost.slug && !blogPost.thumbnail) {
-        try {
-          const response = await fetch(`/api/post/${blogPost.slug}`);
-          const data = await response.json();
-          if (data.thumbnail) {
-            setThumbnailUrl(data.thumbnail.image_path);
-          }
-        } catch (error) {
-          console.error('Error loading thumbnail:', error);
-        }
-      }
-    };
-    
-    loadThumbnail();
-  }, [blogPost.slug, blogPost.thumbnail]);
-
   // Transform store data to preview format
   const previewPost = {
     slug: blogPost.slug || resolvedParams.slug,
@@ -72,7 +50,7 @@ export default function BlogPreviewPage({ params }: { params: Promise<{ slug: st
     },
     featuredImage: blogPost.thumbnail 
       ? URL.createObjectURL(blogPost.thumbnail)
-      : thumbnailUrl
+      : blogPost.thumbnailUrl
       || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
     tags: blogPost.tags ? blogPost.tags.split(',').map(tag => tag.trim()) : [],
   };

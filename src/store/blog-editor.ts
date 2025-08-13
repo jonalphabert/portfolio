@@ -9,6 +9,7 @@ export interface BlogPost {
   categoryData: { category_id: string; category_name: string; category_slug: string }[];
   tags: string;
   thumbnail: File | null;
+  thumbnailUrl: string | null;
   isPublished: boolean;
   isDraft: boolean;
 }
@@ -59,6 +60,7 @@ const initialBlogPost: BlogPost = {
   categoryData: [],
   tags: '',
   thumbnail: null,
+  thumbnailUrl: null,
   isPublished: false,
   isDraft: false,
 };
@@ -157,6 +159,7 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
           categoryData: data.categories || [],
           tags: (data.blog_tags && data.blog_tags.join(', ')) || '',
           thumbnail: null, // File object can't be reconstructed from API
+          thumbnailUrl: data.thumbnail ? data.thumbnail.image_path : null,
           isPublished: data.blog_status === 'published',
           isDraft: data.blog_status === 'draft',
         };
