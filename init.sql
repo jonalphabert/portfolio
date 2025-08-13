@@ -136,3 +136,6 @@ CREATE TRIGGER update_subscription_updated_at
     BEFORE UPDATE ON subscription
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Add thumbnail_id column to blog table
+ALTER TABLE blog ADD COLUMN thumbnail_id UUID REFERENCES image_uploaded(image_id);

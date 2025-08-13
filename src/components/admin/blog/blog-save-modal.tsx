@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Upload, Save } from 'lucide-react';
 import { useBlogEditor } from '@/store/blog-editor';
+import { CategoryCombobox } from '@/components/admin/blog/CategoryCombobox';
 
 export function BlogSaveModal() {
   const { 
     blogPost, 
     isSaveModalOpen, 
     slugAvailable, 
+    isLoading,
     updateBlogData, 
     generateSlug, 
     checkSlugAvailability, 
@@ -23,11 +26,41 @@ export function BlogSaveModal() {
   } = useBlogEditor();
   
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Load existing thumbnail when modal opens
+  useEffect(() => {
+    if (isSaveModalOpen && blogPost.slug) {
+      // Fetch blog data to get thumbnail URL
+      fetch(`/api/post/${blogPost.slug}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.thumbnail) {
+            setExistingThumbnailUrl(data.thumbnail.image_path);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isSaveModalOpen, blogPost.slug]);
+
+  const handleSave = async () => {
+    const success = await saveDraft();
+    if (success) {
+      router.push('/admin/blog');
+    }
+  };
 
   const handleTitleChange = (newTitle: string) => {
-    const newSlug = generateSlug(newTitle);
-    updateBlogData({ title: newTitle, slug: newSlug });
-    checkSlugAvailability(newSlug);
+    if (isEditMode) {
+      // Edit mode: don't change slug
+      updateBlogData({ title: newTitle });
+    } else {
+      // New post: auto-generate slug
+      const newSlug = generateSlug(newTitle);
+      updateBlogData({ title: newTitle, slug: newSlug });
+      checkSlugAvailability(newSlug);
+    }
   };
 
   const handleSlugChange = (newSlug: string) => {
@@ -35,6 +68,8 @@ export function BlogSaveModal() {
     updateBlogData({ slug: cleanSlug });
     checkSlugAvailability(cleanSlug);
   };
+
+  const isEditMode = blogPost.isDraft || blogPost.isPublished;
 
   const handleThumbnailChange = (file: File) => {
     updateBlogData({ thumbnail: file });
@@ -51,7 +86,7 @@ export function BlogSaveModal() {
         <div className='space-y-6'>
           <div className='space-y-4'>
             <div>
-              <Label htmlFor='title'>Blog Title</Label>
+              <Label className="mb-2" htmlFor='title'>Blog Title</Label>
               <Input
                 id='title'
                 placeholder='Enter blog title...'
@@ -62,14 +97,16 @@ export function BlogSaveModal() {
             </div>
             
             <div>
-              <Label htmlFor='slug'>Blog Slug</Label>
+              <Label className="mb-2" htmlFor='slug'>Blog Slug</Label>
               <Input
                 id='slug'
                 placeholder='blog-url-slug'
                 value={blogPost.slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
+                readOnly={isEditMode}
+                className={isEditMode ? 'bg-muted cursor-not-allowed' : ''}
               />
-              {blogPost.slug && (
+              {blogPost.slug && !isEditMode && (
                 <p className={`text-sm mt-1 ${
                   slugAvailable === null 
                     ? 'text-muted-foreground' 
@@ -77,9 +114,9 @@ export function BlogSaveModal() {
                     ? 'text-green-600' 
                     : 'text-red-600'
                 }`}>
-                  {slugAvailable === null 
+                  {slugAvailable === null
                     ? 'Checking availability...' 
-                    : slugAvailable 
+                    : slugAvailable || isEditMode
                     ? '✓ Slug is available' 
                     : '✗ Slug is already taken'
                   }
@@ -87,18 +124,15 @@ export function BlogSaveModal() {
               )}
             </div>
           </div>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div className='space-y-4'>
+            <CategoryCombobox
+              value={blogPost.category ? blogPost.category.split(',').map(c => c.trim()).filter(Boolean) : []}
+              onValueChange={(value) => updateBlogData({ category: value.join(',') })}
+              placeholder="Select or create categories..."
+            />
+            
             <div>
-              <Label htmlFor='category'>Category</Label>
-              <Input
-                id='category'
-                placeholder='e.g. React, JavaScript'
-                value={blogPost.category}
-                onChange={(e) => updateBlogData({ category: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor='tags'>Tags</Label>
+              <Label className="mb-2" htmlFor='tags'>Tags</Label>
               <Input
                 id='tags'
                 placeholder='comma separated tags'
@@ -109,7 +143,7 @@ export function BlogSaveModal() {
           </div>
 
           <div>
-            <Label htmlFor='excerpt'>Excerpt</Label>
+            <Label className="mb-2" htmlFor='excerpt'>Excerpt</Label>
             <Textarea
               id='excerpt'
               placeholder='Brief description of your blog post...'
@@ -120,7 +154,7 @@ export function BlogSaveModal() {
           </div>
 
           <div>
-            <Label>Featured Image/Thumbnail</Label>
+            <Label className="mb-2">Featured Image/Thumbnail</Label>
             <div className='flex items-start gap-4'>
               <div className='flex-1'>
                 <label className='border-border hover:bg-muted/50 flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed'>
@@ -141,15 +175,17 @@ export function BlogSaveModal() {
                     }}
                   />
                 </label>
-                {blogPost.thumbnail && (
+                {blogPost.thumbnail ? (
                   <p className='text-muted-foreground mt-2 text-sm'>Selected: {blogPost.thumbnail.name}</p>
-                )}
+                ) : existingThumbnailUrl ? (
+                  <p className='text-muted-foreground mt-2 text-sm'>Current thumbnail (click to change)</p>
+                ) : null}
               </div>
 
-              {thumbnailPreview && (
+              {(thumbnailPreview || existingThumbnailUrl) && (
                 <div className='h-32 w-32 overflow-hidden rounded-lg border'>
                   <Image
-                    src={thumbnailPreview}
+                    src={thumbnailPreview || existingThumbnailUrl || ''}
                     alt='Thumbnail preview'
                     width={128}
                     height={128}
@@ -164,9 +200,12 @@ export function BlogSaveModal() {
             <Button variant='outline' onClick={closeSaveModal}>
               Cancel
             </Button>
-            <Button onClick={saveDraft} disabled={!blogPost.slug || slugAvailable === false}>
+            <Button 
+              onClick={handleSave} 
+              disabled={!blogPost.title || !blogPost.slug || slugAvailable === false || isLoading}
+            >
               <Save className='mr-2 h-4 w-4' />
-              Save Draft
+              {isLoading ? 'Saving...' : 'Save Draft'}
             </Button>
           </div>
         </div>

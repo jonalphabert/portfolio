@@ -6,8 +6,10 @@ export interface BlogPost {
   content: string;
   excerpt: string;
   category: string;
+  categoryData: { category_id: string; category_name: string; category_slug: string }[];
   tags: string;
   thumbnail: File | null;
+  thumbnailUrl: string | null;
   isPublished: boolean;
   isDraft: boolean;
 }
@@ -36,8 +38,8 @@ interface BlogEditorState {
   closeSaveModal: () => void;
 
   // Save actions
-  saveDraft: () => Promise<void>;
-  publishPost: () => Promise<void>;
+  saveDraft: () => Promise<boolean>;
+  publishPost: () => Promise<boolean>;
 
   // Draft persistence
   loadDraft: () => void;
@@ -55,8 +57,10 @@ const initialBlogPost: BlogPost = {
     '# Welcome to the Blog Editor\n\nStart writing your **markdown** content here!\n\n## Features\n\n- Bold text with **double asterisks**\n- Italic text with *single asterisks*\n- `Inline code` with backticks\n- [Links](https://example.com)\n- ![Images](https://via.placeholder.com/300x200)\n\n```javascript\n// Code blocks\nconst hello = "world";\nconsole.log(hello);\n```',
   excerpt: '',
   category: '',
+  categoryData: [],
   tags: '',
   thumbnail: null,
+  thumbnailUrl: null,
   isPublished: false,
   isDraft: false,
 };
@@ -68,11 +72,22 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
   isLoading: false,
 
   updateTitle: (title) => {
-    const slug = get().generateSlug(title);
-    set((state) => ({
-      blogPost: { ...state.blogPost, title, slug },
-    }));
-    get().checkSlugAvailability(slug);
+    const { blogPost } = get();
+    const isEditMode = blogPost.isDraft || blogPost.isPublished;
+    
+    if (isEditMode) {
+      // Edit mode: don't change slug
+      set((state) => ({
+        blogPost: { ...state.blogPost, title },
+      }));
+    } else {
+      // New post: auto-generate slug
+      const slug = get().generateSlug(title);
+      set((state) => ({
+        blogPost: { ...state.blogPost, title, slug },
+      }));
+      get().checkSlugAvailability(slug);
+    }
     get().saveDraftToSession();
   },
 
@@ -98,53 +113,61 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
       .replace(/^-+|-+$/g, '');
   },
 
-  checkSlugAvailability: async (slug) => {
-    if (!slug) {
-      set({ slugAvailable: null });
-      return;
-    }
+  checkSlugAvailability: (() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    return async (slug: string) => {
+      if (!slug) {
+        set({ slugAvailable: null });
+        return;
+      }
 
-    // Mock API call
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const unavailableSlugs = ['building-scalable-react-applications', 'modern-css-techniques'];
-    set({ slugAvailable: !unavailableSlugs.includes(slug) });
-  },
+      // Clear previous timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      // Set new timeout for debounced API call
+      timeoutId = setTimeout(async () => {
+        try {
+          const response = await fetch(`/api/post/${slug}/available`);
+          const data = await response.json();
+          set({ slugAvailable: data.available });
+        } catch (error) {
+          console.error('Error checking slug availability:', error);
+          set({ slugAvailable: null });
+        }
+      }, 500);
+    };
+  })(),
 
   loadBlogBySlug: async (slug) => {
     set({ isLoading: true });
 
     try {
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(`/api/post/${slug}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        const blogPost: BlogPost = {
+          title: data.blog_title || '',
+          slug: data.blog_slug || '',
+          content: data.blog_content || '',
+          excerpt: data.blog_description || '',
+          category: data.categories ? data.categories.map((c: { category_id: string; category_name: string; category_slug: string }) => c.category_id).join(',') : '',
+          categoryData: data.categories || [],
+          tags: (data.blog_tags && data.blog_tags.join(', ')) || '',
+          thumbnail: null, // File object can't be reconstructed from API
+          thumbnailUrl: data.thumbnail ? data.thumbnail.image_path : null,
+          isPublished: data.blog_status === 'published',
+          isDraft: data.blog_status === 'draft',
+        };
 
-      const mockBlog: BlogPost = {
-        title: 'Building Scalable React Applications with TypeScript',
-        slug: 'getting-started-nextjs-15',
-        content: `# Introduction
-
-Building scalable React applications requires careful consideration of architecture, type safety, and developer experience.
-
-## Why TypeScript?
-
-TypeScript brings several advantages to React development:
-
-- **Type Safety**: Catch errors at compile time
-- **Better Developer Experience**: Enhanced autocomplete
-- **Self-Documenting Code**: Types serve as documentation
-
-## Conclusion
-
-Building scalable React applications with TypeScript requires strong architecture and best practices.`,
-        excerpt:
-          'Learn best practices for building maintainable and scalable React applications using TypeScript.',
-        category: 'React',
-        tags: 'React, TypeScript, Architecture, Best Practices',
-        thumbnail: null,
-        isPublished: slug === 'building-scalable-react-applications',
-        isDraft: true,
-      };
-
-      set({ blogPost: mockBlog });
+        set({ blogPost });
+      } else {
+        console.error('Failed to load blog: Post not found');
+      }
     } catch (error) {
       console.error('Failed to load blog:', error);
     } finally {
@@ -157,30 +180,138 @@ Building scalable React applications with TypeScript requires strong architectur
 
   saveDraft: async () => {
     const { blogPost } = get();
-    console.log('Saving draft:', { ...blogPost, isDraft: true });
+    set({ isLoading: true });
 
-    // Mock API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      let thumbnailImageId = null;
 
-    set((state) => ({
-      blogPost: { ...state.blogPost, isDraft: true },
-      isSaveModalOpen: false,
-    }));
+      // Upload thumbnail if exists
+      if (blogPost.thumbnail) {
+        const formData = new FormData();
+        formData.append('type', 'file');
+        formData.append('file', blogPost.thumbnail);
+        formData.append('alt', `${blogPost.title} thumbnail`);
 
-    // Clear all drafts after successful save
-    get().clearAllDrafts();
+        const imageResponse = await fetch('/api/image', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (imageResponse.ok) {
+          const imageResult = await imageResponse.json();
+          thumbnailImageId = imageResult.image_id;
+        }
+      }
+
+      // Get user ID from auth store
+      const { useAuth } = await import('@/store/auth');
+      const authStore = useAuth.getState();
+      
+      console.log('Auth state:', {
+        user: authStore.user,
+        isAuthenticated: authStore.isAuthenticated,
+        isSetupComplete: authStore.isSetupComplete
+      });
+      
+      if (!authStore.isAuthenticated || !authStore.user?.user_id) {
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      
+      const userId = authStore.user.user_id;
+      
+      // Detect if this is an edit (existing blog) or create (new blog)
+      const isEdit = blogPost.isDraft || blogPost.isPublished;
+
+      // Prepare data for API
+      const postData = {
+        title: blogPost.title,
+        content: blogPost.content,
+        blog_description: blogPost.excerpt,
+        tags: blogPost.tags ? blogPost.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
+        thumbnail_image_id: thumbnailImageId,
+        ...(isEdit 
+          ? { category_ids: blogPost.category ? blogPost.category.split(',').filter(Boolean) : [] } 
+          : { slug: blogPost.slug, user_id: userId }
+        )
+      };
+
+      const response = await fetch(isEdit ? `/api/post/${blogPost.slug}` : '/api/post', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(postData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Insert categories after getting the blog_id from result
+        if (blogPost.category && result.blog_id) {
+          const categoryIds = blogPost.category.split(',').filter(Boolean);
+          for (const categoryId of categoryIds) {
+            await fetch('/api/post/category', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                blog_id: result.blog_id,
+                category_id: categoryId,
+              }),
+            });
+          }
+        }
+
+        set((state) => ({
+          blogPost: { ...state.blogPost, isDraft: true },
+          isSaveModalOpen: false,
+        }));
+
+        get().clearAllDrafts();
+        return true;
+      } else {
+        throw new Error('Failed to save post');
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      // Show error to user
+      alert(`Failed to save blog post: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   publishPost: async () => {
     const { blogPost } = get();
-    console.log('Publishing post:', { ...blogPost, isPublished: true });
+    set({ isLoading: true });
 
-    // Mock API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      // First save as draft if not already saved
+      if (!blogPost.isDraft) {
+        await get().saveDraft();
+      }
 
-    set((state) => ({
-      blogPost: { ...state.blogPost, isPublished: true, isDraft: false },
-    }));
+      // Then publish
+      const response = await fetch(`/api/post/${blogPost.slug}/publish`, {
+        method: 'PUT',
+      });
+
+      if (response.ok) {
+        set((state) => ({
+          blogPost: { ...state.blogPost, isPublished: true, isDraft: false },
+        }));
+        return true;
+      } else {
+        throw new Error('Failed to publish post');
+      }
+    } catch (error) {
+      console.error('Error publishing post:', error);
+      return false;
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   loadDraft: () => {

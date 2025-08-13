@@ -6,12 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Upload } from 'lucide-react';
 import Image from 'next/image';
+import { useImageModal } from '@/store/image-modal';
+import { useBlogEditor } from '@/store/blog-editor';
 
 export function ImageUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [altText, setAltText] = useState('');
   const [imageName, setImageName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  const { closeModal } = useImageModal();
+  const { updateContent, blogPost } = useBlogEditor();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -22,16 +27,45 @@ export function ImageUpload() {
     }
   };
 
+  const [uploading, setUploading] = useState(false);
+
   const handleUpload = async () => {
     if (!file || !altText || !imageName) return;
 
-    // Upload logic here
-    console.log('Upload:', { file, altText, imageName });
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('type', 'file');
+      formData.append('file', file);
+      formData.append('alt', altText);
 
-    // After successful upload, insert markdown
-    const imageUrl = URL.createObjectURL(file); // Replace with actual uploaded URL
-    const markdown = `![${altText}](${imageUrl})`;
-    console.log('Insert markdown:', markdown);
+      const response = await fetch('/api/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const markdown = `![${altText}](${result.image_path})`;
+        
+        // Insert markdown into editor
+        const newContent = blogPost.content + '\n\n' + markdown;
+        updateContent(newContent);
+        
+        // Close modal and reset form
+        closeModal();
+        setFile(null);
+        setAltText('');
+        setImageName('');
+        setPreviewUrl(null);
+      } else {
+        console.error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -97,8 +131,8 @@ export function ImageUpload() {
         />
       </div>
 
-      <Button onClick={handleUpload} disabled={!file || !altText || !imageName} className='w-full'>
-        Upload & Insert
+      <Button onClick={handleUpload} disabled={!file || !altText || !imageName || uploading} className='w-full'>
+        {uploading ? 'Uploading...' : 'Upload & Insert'}
       </Button>
     </div>
   );

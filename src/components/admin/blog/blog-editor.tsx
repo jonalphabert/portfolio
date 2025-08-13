@@ -36,6 +36,7 @@ export function BlogEditor({ mode, slug }: BlogEditorProps) {
   const { openModal } = useImageModal();
   const [isLinkModalOpen, setIsLinkModalOpen] = React.useState(false);
 
+
   const insertMarkdown = (
     type: 'wrap' | 'prefix' | 'block',
     syntax: string,
@@ -179,10 +180,14 @@ export function BlogEditor({ mode, slug }: BlogEditorProps) {
             {blogPost.title && (
               <div className='mb-6'>
                 <h1 className='mb-2 text-3xl font-bold'>{blogPost.title}</h1>
-                {blogPost.category && (
-                  <Badge variant='secondary' className='mb-2'>
-                    {blogPost.category}
-                  </Badge>
+                {blogPost.categoryData.length > 0 && (
+                  <div className='mb-2 flex flex-wrap gap-1'>
+                    {blogPost.categoryData.map((category) => (
+                      <Badge key={category.category_id} variant='secondary'>
+                        {category.category_name}
+                      </Badge>
+                    ))}
+                  </div>
                 )}
                 {blogPost.tags && (
                   <div className='flex flex-wrap gap-1'>

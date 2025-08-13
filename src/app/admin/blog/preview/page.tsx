@@ -21,7 +21,9 @@ export default function BlogPreviewPage() {
     excerpt: blogPost.excerpt,
     publishedDate: new Date().toISOString().split('T')[0],
     readTime: Math.ceil(blogPost.content.split(' ').length / 200) || 5,
-    category: blogPost.category,
+    category: blogPost.categoryData.length > 0 
+      ? blogPost.categoryData.map(cat => cat.category_name).join(', ')
+      : blogPost.category,
     author: {
       name: 'Admin User',
       avatar: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',

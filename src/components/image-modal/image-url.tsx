@@ -5,11 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import Image from 'next/image';
+import { useImageModal } from '@/store/image-modal';
+import { useBlogEditor } from '@/store/blog-editor';
 
 export function ImageUrl() {
   const [url, setUrl] = useState('');
   const [altText, setAltText] = useState('');
+  const [fileName, setFileName] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
+  const { closeModal } = useImageModal();
+  const { updateContent, blogPost } = useBlogEditor();
 
   const handleUrlChange = (value: string) => {
     setUrl(value);
@@ -20,10 +27,43 @@ export function ImageUrl() {
     setIsValidUrl(isValid);
   };
 
-  const handleInsert = () => {
-    if (url && altText) {
-      const markdown = `![${altText}](${url})`;
-      console.log('Insert markdown:', markdown);
+  const handleInsert = async () => {
+    if (!url || !altText || !fileName) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('type', 'url');
+      formData.append('url', url);
+      formData.append('fileName', fileName);
+      formData.append('alt', altText);
+
+      const response = await fetch('/api/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const markdown = `![${altText}](${result.image_path})`;
+        
+        // Insert markdown into editor
+        const newContent = blogPost.content + '\n\n' + markdown;
+        updateContent(newContent);
+        
+        // Close modal and reset form
+        closeModal();
+        setUrl('');
+        setAltText('');
+        setFileName('');
+        setIsValidUrl(false);
+      } else {
+        console.error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -43,13 +83,12 @@ export function ImageUrl() {
         <div className="space-y-2">
           <Label>Image Preview</Label>
           <div className="border rounded-lg p-4 bg-muted/20">
-            <Image
+            <img
               src={url}
               alt="Preview"
               width={300}
               height={200}
               className="max-w-full h-auto rounded"
-              onError={() => setIsValidUrl(false)}
             />
           </div>
         </div>
@@ -60,6 +99,16 @@ export function ImageUrl() {
           Please enter a valid image URL (jpg, jpeg, png, gif, webp, svg)
         </p>
       )}
+
+      <div className="space-y-2">
+        <Label htmlFor="file-name">File Name</Label>
+        <Input
+          id="file-name"
+          placeholder="Enter file name for database"
+          value={fileName}
+          onChange={(e) => setFileName(e.target.value)}
+        />
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="alt-text-url">Alt Text</Label>
@@ -73,10 +122,10 @@ export function ImageUrl() {
 
       <Button 
         onClick={handleInsert} 
-        disabled={!url || !altText || !isValidUrl}
+        disabled={!url || !altText || !fileName || !isValidUrl || uploading}
         className="w-full"
       >
-        Insert Image
+        {uploading ? 'Uploading...' : 'Upload & Insert'}
       </Button>
     </div>
   );

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface User {
+  user_id: string;
   username: string;
   email: string;
 }
@@ -48,7 +49,11 @@ export const useAuth = create<AuthState>()(
           localStorage.setItem('jwt-token', result.token);
 
           set({
-            user: result.user,
+            user: {
+              user_id: result.user.id,
+              username: result.user.username,
+              email: result.user.email,
+            },
             isAuthenticated: true,
             isSetupComplete: true
           });
@@ -81,7 +86,6 @@ export const useAuth = create<AuthState>()(
 
       setupAdmin: async (username, email, password) => {
         try {
-          // Mock API call
           const response = await fetch('/api/auth/setup', {
             method: 'POST',
             headers: {
@@ -90,17 +94,28 @@ export const useAuth = create<AuthState>()(
             body: JSON.stringify({ username, email, password }),
           });
 
+          const result = await response.json();
+
+          if (!response.ok || result.error) {
+            return false;
+          }
+
           // Store admin setup data
           localStorage.setItem(
             'admin-setup',
             JSON.stringify({
-              username,
-              email,
+              user_id: result.user.id,
+              username: result.user.username,
+              email: result.user.email,
             })
           );
 
           set({
-            user: { username, email },
+            user: {
+              user_id: result.user.id,
+              username: result.user.username,
+              email: result.user.email,
+            },
             isAuthenticated: true,
             isSetupComplete: true,
           });

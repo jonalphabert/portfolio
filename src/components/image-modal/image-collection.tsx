@@ -1,89 +1,113 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
-import Image from 'next/image';
+import { useImageModal } from '@/store/image-modal';
+import { useBlogEditor } from '@/store/blog-editor';
+import { SearchInput } from './SearchInput';
+import { ImageGrid } from './ImageGrid';
 
-// Mock data - replace with actual API call
-const mockImages = [
-  {
-    id: 1,
-    url: 'https://via.placeholder.com/300x200',
-    name: 'Sample Image 1',
-    altText: 'Sample description 1',
-  },
-  {
-    id: 2,
-    url: 'https://via.placeholder.com/300x200',
-    name: 'Sample Image 2',
-    altText: 'Sample description 2',
-  },
-  {
-    id: 3,
-    url: 'https://via.placeholder.com/300x200',
-    name: 'Sample Image 3',
-    altText: 'Sample description 3',
-  },
-];
+interface ImageData {
+  image_id: string;
+  image_name: string;
+  image_path: string;
+  image_alt: string;
+  image_size: number;
+  image_type: string;
+  created_at: string;
+}
 
 export function ImageCollection() {
+  const [images, setImages] = useState<ImageData[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [altText, setAltText] = useState('');
-  const [selectedImage, setSelectedImage] = useState<(typeof mockImages)[0] | null>(null);
+  const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  const filteredImages = mockImages.filter(
-    (img) =>
-      img.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      img.altText.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { closeModal } = useImageModal();
+  const { updateContent, blogPost } = useBlogEditor();
 
-  const handleImageSelect = (image: (typeof mockImages)[0]) => {
+  const IMAGES_PER_PAGE = 12;
+
+  const fetchImages = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: IMAGES_PER_PAGE.toString(),
+        ...(searchTerm && { search: searchTerm })
+      });
+
+      const response = await fetch(`/api/image?${params}`);
+      const data = await response.json();
+      
+      setImages(data.images || []);
+      setHasMore(data.images?.length === IMAGES_PER_PAGE);
+    } catch (error) {
+      console.error('Error fetching images:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, searchTerm]);
+
+  useEffect(() => {
+    fetchImages();
+  }, [fetchImages]);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+    setSelectedImage(null);
+  }, []);
+
+  const handleImageSelect = useCallback((image: ImageData) => {
     setSelectedImage(image);
-    setAltText(image.altText);
-  };
+    setAltText(image.image_alt);
+  }, []);
 
   const handleInsert = () => {
     if (selectedImage) {
-      const markdown = `![${altText}](${selectedImage.url})`;
-      // Insert markdown logic here
-      console.log('Insert markdown:', markdown);
+      const markdown = `![${altText}](${selectedImage.image_path})`;
+      
+      // Insert markdown into editor
+      const newContent = blogPost.content + '\n\n' + markdown;
+      updateContent(newContent);
+      
+      // Close modal
+      closeModal();
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasMore) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
   return (
     <div className='space-y-4'>
-      <div className='relative'>
-        <Search className='text-muted-foreground absolute top-3 left-3 h-4 w-4' />
-        <Input
-          placeholder='Search images...'
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className='pl-10'
-        />
-      </div>
+      <SearchInput onSearch={handleSearch} />
 
-      <div className='grid max-h-60 grid-cols-3 gap-4 overflow-y-auto'>
-        {filteredImages.map((image) => (
-          <div
-            key={image.id}
-            className={`cursor-pointer rounded-lg border-2 p-2 transition-colors ${
-              selectedImage?.id === image.id ? 'border-primary' : 'border-border'
-            }`}
-            onClick={() => handleImageSelect(image)}
-          >
-            <Image
-              src={image.url}
-              alt={image.name}
-              width={150}
-              height={100}
-              className='h-20 w-full rounded object-cover'
-            />
-            <p className='mt-1 truncate text-xs'>{image.name}</p>
-          </div>
-        ))}
-      </div>
+      <ImageGrid
+        images={images}
+        loading={loading}
+        selectedImage={selectedImage}
+        currentPage={currentPage}
+        hasMore={hasMore}
+        searchTerm={searchTerm}
+        onImageSelect={handleImageSelect}
+        onPrevPage={handlePrevPage}
+        onNextPage={handleNextPage}
+      />
 
       <div className='space-y-2'>
         <Input

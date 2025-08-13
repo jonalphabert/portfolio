@@ -6,15 +6,15 @@ import { BlogPreviewBanner } from '@/components/admin/blog/blog-preview-banner';
 import { BlogPreviewContent } from '@/components/admin/blog/blog-preview-content';
 import { useBlogEditor } from '@/store/blog-editor';
 
-export default function BlogPreviewPage({ params }: { params: { slug: string } }) {
+export default function BlogPreviewPage({ params }: { params: Promise<{ slug: string }> }) {
   const { blogPost, publishPost, loadBlogBySlug, isLoading } = useBlogEditor();
-
+  const resolvedParams = React.use(params);
   // Load blog data if slug exists and no data in store
   React.useEffect(() => {
-    if (params.slug && (!blogPost.title || blogPost.slug !== params.slug)) {
-      loadBlogBySlug(params.slug);
+    if (resolvedParams.slug && (!blogPost.title || blogPost.slug !== resolvedParams.slug)) {
+      loadBlogBySlug(resolvedParams.slug);
     }
-  }, [params.slug, blogPost.slug, blogPost.title, loadBlogBySlug]);
+  }, [resolvedParams.slug, blogPost.slug, blogPost.title, loadBlogBySlug]);
 
   if (isLoading) {
     return (
@@ -34,13 +34,15 @@ export default function BlogPreviewPage({ params }: { params: { slug: string } }
 
   // Transform store data to preview format
   const previewPost = {
-    slug: blogPost.slug || params.slug,
+    slug: blogPost.slug || resolvedParams.slug,
     title: blogPost.title,
     content: blogPost.content,
     excerpt: blogPost.excerpt,
     publishedDate: new Date().toISOString().split('T')[0],
     readTime: Math.ceil(blogPost.content.split(' ').length / 200) || 5,
-    category: blogPost.category,
+    category: blogPost.categoryData.length > 0 
+      ? blogPost.categoryData.map(cat => cat.category_name).join(', ')
+      : blogPost.category,
     author: {
       name: 'Admin User',
       avatar: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
@@ -48,7 +50,8 @@ export default function BlogPreviewPage({ params }: { params: { slug: string } }
     },
     featuredImage: blogPost.thumbnail 
       ? URL.createObjectURL(blogPost.thumbnail)
-      : 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
+      : blogPost.thumbnailUrl
+      || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
     tags: blogPost.tags ? blogPost.tags.split(',').map(tag => tag.trim()) : [],
   };
 
