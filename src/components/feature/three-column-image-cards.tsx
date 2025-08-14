@@ -4,31 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { BlogPost } from '@/types';
 import { useEffect, useState } from 'react';
 
-interface BlogPost {
-  blog_id: string;
-  blog_title: string;
-  blog_slug: string;
-  blog_description: string;
-  blog_tags: string[];
-  created_at: string;
-  published_at: string | null;
-  categories: {
-    category_id: string;
-    category_name: string;
-    category_slug: string;
-  }[];
-  thumbnail?: {
-    image_id: string;
-    image_path: string;
-    image_alt: string;
-  };
-  author: {
-    username: string;
-    email: string;
-  };
-}
+// Using BlogPost from @/types
 
 async function getLatestPosts(): Promise<BlogPost[]> {
   try {

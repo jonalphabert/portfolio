@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { PostFilters, CreatePostData, UpdatePostData } from '@/types';
 
 export interface Post {
   blog_id: string;
@@ -27,35 +28,6 @@ export interface Post {
     image_path: string;
     image_alt: string;
   };
-}
-
-export interface CreatePostData {
-  title: string;
-  slug: string;
-  content: string;
-  blog_description: string;
-  tags?: string[];
-  user_id: string;
-  category_ids?: string[];
-  thumbnail_image_id?: string;
-}
-
-export interface UpdatePostData {
-  title?: string;
-  content?: string;
-  blog_description?: string;
-  tags?: string[];
-  category_ids?: string[];
-  thumbnail_image_id?: string;
-}
-
-export interface PostFilters {
-  category?: string;
-  status?: 'draft' | 'published' | 'archived';
-  search?: string;
-  sort?: string;
-  page?: number;
-  limit?: number;
 }
 
 export class PostService {

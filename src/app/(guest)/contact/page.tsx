@@ -4,6 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Contact | Portfolio',
+  description: 'Get in touch with me for project collaborations, job opportunities, or just to say hello. Let\'s connect and build something amazing together.',
+  openGraph: {
+    title: 'Contact | Portfolio',
+    description: 'Get in touch with me for project collaborations, job opportunities, or just to say hello. Let\'s connect and build something amazing together.',
+  },
+};
 
 const socialLinks = [
   {

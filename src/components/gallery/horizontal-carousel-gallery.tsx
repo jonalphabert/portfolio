@@ -6,10 +6,12 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { CarouselApi } from '@/components/ui/carousel';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
+import Link from 'next/link';
 
 export interface HorizontalCarouselGalleryItem {
   id: string;
   title: string;
+  slug: string;
   description: string;
   href: string;
   image: string;
@@ -25,68 +27,12 @@ export interface HorizontalCarouselGalleryProps {
   viewAllHref?: string;
 }
 
-const data = [
-  {
-    id: 'ecommerce-platform',
-    title: 'E-Commerce Platform',
-    description:
-      'Full-stack e-commerce solution with real-time inventory, payment integration, and admin dashboard. Built for scalability and performance.',
-    href: 'https://demo-ecommerce.example.com',
-    githubUrl: 'https://github.com/username/ecommerce-platform',
-    image:
-      'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    technologies: ['React', 'Node.js', 'PostgreSQL', 'Stripe'],
-  },
-  {
-    id: 'ai-dashboard',
-    title: 'AI Analytics Dashboard',
-    description:
-      'Machine learning dashboard for data visualization and predictive analytics. Features real-time data processing and custom model training.',
-    href: 'https://ai-dashboard.example.com',
-    githubUrl: 'https://github.com/username/ai-dashboard',
-    image:
-      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    technologies: ['Python', 'TensorFlow', 'React', 'FastAPI'],
-  },
-  {
-    id: 'mobile-fitness-app',
-    title: 'Fitness Tracking App',
-    description:
-      'Cross-platform mobile app for workout tracking, nutrition monitoring, and social fitness challenges. Over 10K active users.',
-    href: 'https://fitness-app.example.com',
-    githubUrl: 'https://github.com/username/fitness-app',
-    image:
-      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    technologies: ['React Native', 'Firebase', 'TypeScript', 'Expo'],
-  },
-  {
-    id: 'blockchain-voting',
-    title: 'Blockchain Voting System',
-    description:
-      'Decentralized voting platform ensuring transparency and security. Smart contracts handle vote validation and immutable record keeping.',
-    href: 'https://blockchain-voting.example.com',
-    githubUrl: 'https://github.com/username/blockchain-voting',
-    image:
-      'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    technologies: ['Solidity', 'Web3.js', 'Next.js', 'Ethereum'],
-  },
-  {
-    id: 'real-time-chat',
-    title: 'Real-Time Chat Platform',
-    description:
-      'Scalable messaging platform with end-to-end encryption, file sharing, and video calls. Supports thousands of concurrent users.',
-    href: 'https://chat-platform.example.com',
-    githubUrl: 'https://github.com/username/chat-platform',
-    image:
-      'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-    technologies: ['Socket.io', 'Redis', 'MongoDB', 'Express'],
-  },
-];
+
 
 const HorizontalCarouselGallery = ({
   title = 'Featured Projects',
   description = 'A showcase of innovative applications and systems built with modern technologies. Each project demonstrates unique solutions to real-world challenges.',
-  items = data,
+  items,
   viewAllText = 'View All Projects',
   viewAllHref = '/projects',
 }: HorizontalCarouselGalleryProps) => {
@@ -94,6 +40,27 @@ const HorizontalCarouselGallery = ({
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [projects, setProjects] = useState<HorizontalCarouselGalleryItem[]>(items || []);
+  const [loading, setLoading] = useState(!items);
+
+  useEffect(() => {
+    if (!items) {
+      fetchFeaturedProjects();
+    }
+  }, [items]);
+
+  const fetchFeaturedProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/guest/project?featured=true&limit=5');
+      const data = await response.json();
+      setProjects(data.projects || []);
+    } catch (error) {
+      console.error('Error fetching featured projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!carouselApi) {
@@ -169,7 +136,26 @@ const HorizontalCarouselGallery = ({
           }}
         >
           <CarouselContent className='ml-0 2xl:mr-[max(0rem,calc(50vw-700px))] 2xl:ml-[max(8rem,calc(50vw-700px))]'>
-            {items.map((item) => (
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, i) => (
+                <CarouselItem key={i} className='max-w-[320px] pl-[20px] lg:max-w-[360px]'>
+                  <div className='group cursor-pointer rounded-xl'>
+                    <div className='group relative h-full min-h-[27rem] max-w-full overflow-hidden rounded-2xl md:aspect-5/4 lg:aspect-16/9 bg-muted animate-pulse'>
+                      <div className='absolute inset-x-0 bottom-0 flex flex-col items-start p-6 text-white md:p-8'>
+                        <div className='mb-3 flex flex-wrap gap-2'>
+                          <div className='h-6 w-16 bg-white/20 rounded-full animate-pulse' />
+                          <div className='h-6 w-20 bg-white/20 rounded-full animate-pulse' />
+                        </div>
+                        <div className='mb-2 pt-2 h-6 w-3/4 bg-white/20 rounded animate-pulse' />
+                        <div className='mb-6 h-4 w-full bg-white/20 rounded animate-pulse' />
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))
+            ) : (
+              projects.map((item) => (
               <CarouselItem key={item.id} className='max-w-[320px] pl-[20px] lg:max-w-[360px]'>
                 <div className='group cursor-pointer rounded-xl'>
                   <div className='group relative h-full min-h-[27rem] max-w-full overflow-hidden rounded-2xl md:aspect-5/4 lg:aspect-16/9'>
@@ -202,24 +188,23 @@ const HorizontalCarouselGallery = ({
                         {item.description}
                       </div>
                       <div className='flex gap-3'>
-                        <a
-                          href={item.href}
-                          target='_blank'
+                        <Link
+                          href={`/projects/${item.slug}`}
                           rel='noopener noreferrer'
-                          className='inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-white/20'
+                          className='inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/20'
                         >
-                          View Project
                           <ExternalLink className='size-4' />
-                        </a>
+                          View Project
+                        </Link>
                         {item.githubUrl && (
                           <a
                             href={item.githubUrl}
                             target='_blank'
                             rel='noopener noreferrer'
-                            className='inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-white/20'
+                            className='inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/20'
                           >
                             <Github className='size-4' />
-                            GitHub
+                            Code
                           </a>
                         )}
                       </div>
@@ -227,7 +212,8 @@ const HorizontalCarouselGallery = ({
                   </div>
                 </div>
               </CarouselItem>
-            ))}
+            ))
+            )}
           </CarouselContent>
         </Carousel>
       </div>

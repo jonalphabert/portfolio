@@ -1,22 +1,11 @@
 import { create } from 'zustand';
+import { BlogEditorPost, Category } from '@/types';
 
-export interface BlogPost {
-  title: string;
-  slug: string;
-  content: string;
-  excerpt: string;
-  category: string;
-  categoryData: { category_id: string; category_name: string; category_slug: string }[];
-  tags: string;
-  thumbnail: File | null;
-  thumbnailUrl: string | null;
-  isPublished: boolean;
-  isDraft: boolean;
-}
+// Using BlogEditorPost from @/types
 
 interface BlogEditorState {
   // Blog data
-  blogPost: BlogPost;
+  blogPost: BlogEditorPost;
 
   // UI state
   isSaveModalOpen: boolean;
@@ -26,7 +15,7 @@ interface BlogEditorState {
   // Actions
   updateTitle: (title: string) => void;
   updateContent: (content: string) => void;
-  updateBlogData: (data: Partial<BlogPost>) => void;
+  updateBlogData: (data: Partial<BlogEditorPost>) => void;
   generateSlug: (title: string) => string;
   checkSlugAvailability: (slug: string) => Promise<void>;
 
@@ -50,7 +39,7 @@ interface BlogEditorState {
   resetEditor: () => void;
 }
 
-const initialBlogPost: BlogPost = {
+const initialBlogPost: BlogEditorPost = {
   title: '',
   slug: '',
   content:
@@ -150,7 +139,7 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
       if (response.ok) {
         const data = await response.json();
         
-        const blogPost: BlogPost = {
+        const blogPost: BlogEditorPost = {
           title: data.blog_title || '',
           slug: data.blog_slug || '',
           content: data.blog_content || '',
