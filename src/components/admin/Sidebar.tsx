@@ -1,13 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, FileText, Users, BarChart3, LogOut } from 'lucide-react';
+import { Settings, FileText, Users, BarChart3, LogOut, BriefcaseBusiness } from 'lucide-react';
 import { useAuth } from '@/store/auth';
 
 const adminNavItems = [
   { name: 'Dashboard', href: '/admin', icon: BarChart3 },
+  { name: 'Projects', href: '/admin/project', icon: BriefcaseBusiness },
   { name: 'Blog Posts', href: '/admin/blog', icon: FileText },
-  { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'Subscribers', href: '/admin/subscriber', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

@@ -139,3 +139,23 @@ CREATE TRIGGER update_subscription_updated_at
 
 -- Add thumbnail_id column to blog table
 ALTER TABLE blog ADD COLUMN thumbnail_id UUID REFERENCES image_uploaded(image_id);
+
+CREATE TABLE project (
+    project_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_title VARCHAR(255) NOT NULL,
+    project_description VARCHAR(255) NOT NULL,
+    project_slug VARCHAR(255) NOT NULL UNIQUE,
+    project_content TEXT NOT NULL,
+    project_tech_stacks TEXT[],
+    project_user_id UUID NOT NULL REFERENCES user_admin(user_id),
+    project_url VARCHAR(255),
+    project_github VARCHAR(255),
+    project_thumbnail VARCHAR(255),
+    project_status VARCHAR(20) DEFAULT 'draft' CHECK (project_status IN ('draft', 'published', 'archived')),    
+    blog_views INTEGER DEFAULT 0,
+    is_featured BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    published_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
+);

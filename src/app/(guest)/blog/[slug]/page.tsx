@@ -1,35 +1,12 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { BlogPostContent } from '@/components/blog/blog-post-content';
+import { PublicBlogPost, RelatedPost } from '@/types';
 
-export interface BlogPost {
-  slug: string;
-  title: string;
-  content: string;
-  excerpt: string;
-  publishedDate: string;
-  readTime: number;
-  category: string;
-  author: {
-    name: string;
-    avatar: string;
-    bio: string;
-  };
-  featuredImage: string;
-  tags: string[];
-}
-
-export interface RelatedPost {
-  slug: string;
-  title: string;
-  excerpt: string;
-  category: string;
-  readTime: number;
-  featuredImage: string;
-}
+// Using PublicBlogPost and RelatedPost from @/types
 
 // Fetch blog post from API
-async function getBlogPost(slug: string): Promise<BlogPost | null> {
+async function getBlogPost(slug: string): Promise<PublicBlogPost | null> {
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/post/${slug}`, {
       cache: 'no-store'
@@ -61,7 +38,7 @@ async function getBlogPost(slug: string): Promise<BlogPost | null> {
         ? data.thumbnail.image_path 
         : 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
       tags: data.blog_tags || [],
-    };
+    } as PublicBlogPost;
   } catch (error) {
     console.error('Error fetching blog post:', error);
     return null;

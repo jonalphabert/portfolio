@@ -9,6 +9,7 @@ import { Search, Calendar, Clock, ArrowRight, Filter, User } from 'lucide-react'
 import Link from 'next/link';
 import Image from 'next/image';
 import { useDebounce } from '@/hooks/useDebounce';
+import { BlogPost } from '@/types';
 
 const POSTS_PER_PAGE = 6;
 
@@ -28,7 +29,8 @@ const sortOptions = [
   { value: 'popular', label: 'Most Popular' },
 ];
 
-interface Post {
+// Using BlogPost from @/types
+/*interface Post {
   blog_id: string;
   blog_title: string;
   blog_slug: string;
@@ -50,10 +52,10 @@ interface Post {
     image_path: string;
     image_alt: string;
   };
-}
+}*/
 
 export default function BlogList() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');

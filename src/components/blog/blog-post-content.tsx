@@ -8,10 +8,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Calendar, Clock, Tag, Share2, User } from 'lucide-react';
 import { processMarkdown } from '@/lib/markdown';
-import { BlogPost, RelatedPost } from '@/app/(guest)/blog/[slug]/page';
+import { PublicBlogPost, RelatedPost } from '@/types';
 
 interface BlogPostContentProps {
-  post: BlogPost;
+  post: PublicBlogPost;
   relatedPosts: RelatedPost[];
 }
 
