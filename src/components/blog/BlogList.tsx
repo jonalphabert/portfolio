@@ -204,61 +204,56 @@ export default function BlogList() {
                     key={post.blog_id}
                     className='group overflow-hidden py-0 transition-all duration-300 hover:shadow-lg'
                   >
-                    <Link href={`/blog/${post.blog_slug}`} className='group-hover:text-accent'>
-                      <div className='relative overflow-hidden'>
-                        <Image
-                          src={post.thumbnail?.image_path || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop'}
+                    <div className='relative overflow-hidden'>
+                      <Image
+                        src={post.thumbnail?.image_path || 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&h=400&fit=crop'}
                         width={400}
                         height={192}
-                          alt={post.thumbnail?.image_alt || post.blog_title}
-                          className='h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105'
-                        />
-                        <div className='absolute top-3 left-3'>
-                          <Badge variant='secondary' className='bg-background/90 backdrop-blur-sm'>
-                            {post.blog_tags[0] || 'Article'}
-                          </Badge>
+                        alt={post.thumbnail?.image_alt || post.blog_title}
+                        className='h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105'
+                      />
+                      <div className='absolute top-3 left-3'>
+                        <Badge variant='secondary' className='bg-background/90 backdrop-blur-sm'>
+                          {post.blog_tags[0] || 'Article'}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className='p-6'>
+                      <div className='text-muted-foreground mb-3 flex items-center gap-4 text-sm'>
+                        <div className='flex items-center gap-1'>
+                          <Calendar className='h-3 w-3' />
+                          {formatDate(post.published_at || post.created_at)}
+                        </div>
+                        <div className='flex items-center gap-1'>
+                          <Clock className='h-3 w-3' />
+                          {getReadTime(post.blog_content)}
                         </div>
                       </div>
 
-                      <div className='p-6'>
-                        <div className='text-muted-foreground mb-3 flex items-center gap-4 text-sm'>
-                          <div className='flex items-center gap-1'>
-                            <Calendar className='h-3 w-3' />
-                            {formatDate(post.published_at || post.created_at)}
-                          </div>
-                          <div className='flex items-center gap-1'>
-                            <Clock className='h-3 w-3' />
-                            {getReadTime(post.blog_content)}
-                          </div>
-                        </div>
-
-                        <h3 className='group-hover:text-accent mb-3 text-xl font-semibold transition-colors duration-200'>
+                      <Link href={`/blog/${post.blog_slug}`}>
+                        <h3 className='hover:text-accent mb-3 text-xl font-semibold transition-colors duration-200 cursor-pointer'>
                           {post.blog_title}
                         </h3>
+                      </Link>
 
-                        <p className='text-muted-foreground mb-4 line-clamp-2'>
-                          {getExcerpt(post.blog_description)}
-                        </p>
+                      <p className='text-muted-foreground mb-4 line-clamp-2'>
+                        {getExcerpt(post.blog_description)}
+                      </p>
 
-                        <div className='flex items-center justify-between'>
-                          <div className='flex items-center gap-2'>
-                            <User className='text-muted-foreground h-4 w-4' />
-                            <span className='text-muted-foreground text-sm'>{post.author.username}</span>
-                          </div>
-
-                          <Link href={`/blog/${post.blog_slug}`}>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              className='group/button text-accent hover:text-accent-foreground h-auto p-0 font-medium'
-                            >
-                              Read More
-                              <ArrowRight className='ml-1 h-3 w-3 transition-transform duration-200 group-hover/button:translate-x-1' />
-                            </Button>
-                          </Link>
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-2'>
+                          <User className='text-muted-foreground h-4 w-4' />
+                          <span className='text-sm text-muted-foreground'>{post.author.username}</span>
                         </div>
+                        <Link href={`/blog/${post.blog_slug}`}>
+                          <Button variant='ghost' size='sm' className='text-accent hover:text-gray-50'>
+                            Read More
+                            <ArrowRight className='ml-1 h-4 w-4' />
+                          </Button>
+                        </Link>
                       </div>
-                    </Link>
+                    </div>
                   </Card>
                 ))}
               </div>
