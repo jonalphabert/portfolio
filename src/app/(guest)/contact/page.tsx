@@ -2,8 +2,7 @@ import { Github, Linkedin, Mail, MapPin, Instagram, Youtube } from 'lucide-react
 import { FaTiktok } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ContactForm } from '@/components/forms/contact-form';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -109,41 +108,7 @@ export default function ContactPage() {
           <Card>
             <CardContent className='p-8'>
               <h2 className='mb-6 text-2xl font-bold'>Send a Message</h2>
-              <form className='space-y-6'>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                  <div>
-                    <label htmlFor='name' className='mb-2 block text-sm font-medium'>
-                      Name
-                    </label>
-                    <Input id='name' placeholder='Your name' />
-                  </div>
-                  <div>
-                    <label htmlFor='email' className='mb-2 block text-sm font-medium'>
-                      Email
-                    </label>
-                    <Input id='email' type='email' placeholder='your@email.com' />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor='subject' className='mb-2 block text-sm font-medium'>
-                    Subject
-                  </label>
-                  <Input id='subject' placeholder="What's this about?" />
-                </div>
-                <div>
-                  <label htmlFor='message' className='mb-2 block text-sm font-medium'>
-                    Message
-                  </label>
-                  <Textarea
-                    id='message'
-                    placeholder='Tell me about your project or just say hello...'
-                    className='min-h-32'
-                  />
-                </div>
-                <Button type='submit' className='w-full'>
-                  Send Message
-                </Button>
-              </form>
+              <ContactForm />
             </CardContent>
           </Card>
         </div>

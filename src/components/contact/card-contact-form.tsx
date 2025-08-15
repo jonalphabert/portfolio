@@ -1,14 +1,79 @@
 'use client';
 
-import React from 'react';
-import { Github, Linkedin, Mail, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Github, Linkedin, Mail, MapPin, Loader2 } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Recaptcha } from '@/components/forms/recaptcha';
+import { toast } from 'sonner';
+import { stat } from 'fs';
 
 const CardContactForm = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+    website: '' // honeypot field
+  });
+  const [recaptchaToken, setRecaptchaToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRecaptchaVerify = (token: string) => {
+    setRecaptchaToken(token);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    if (!recaptchaToken) {
+      toast.error('Please complete the reCAPTCHA verification');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          recaptchaToken
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setFormData({ name: '', email: '', subject: '', message: '', website: formData.website });
+        setRecaptchaToken('');
+        toast.success('Message sent successfully!');
+      } else {
+        toast.error(result.error || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <section className='bg-background py-32'>
       <div className='container'>
@@ -70,17 +135,72 @@ const CardContactForm = () => {
                   potential collaborations. Let&apos;s connect and build something amazing together.
                 </p>
               </div>
-              <div className='mt-6 flex h-auto flex-col gap-2 space-y-3 md:pl-3'>
-                <Input placeholder='Name' className='bg-background p-6' />
-                <Input placeholder='Email' className='bg-background p-6' />
-                <Input placeholder='Subject' className='bg-background p-6' />
+              <form onSubmit={handleSubmit} className='mt-6 flex h-auto flex-col gap-2 space-y-3 md:pl-3'>
+                <Input 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder='Name' 
+                  className='bg-background p-6'
+                  disabled={isLoading}
+                  required
+                />
+                <Input 
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder='Email' 
+                  className='bg-background p-6'
+                  disabled={isLoading}
+                  required
+                />
+                <Input 
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  placeholder='Subject' 
+                  className='bg-background p-6'
+                  disabled={isLoading}
+                  required
+                />
                 <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
                   placeholder='Message'
                   className='bg-background border-input min-h-32 resize-y rounded-md border p-6'
+                  disabled={isLoading}
+                  required
                 />
+                
+                {/* Honeypot field - hidden from users */}
+                <input
+                  type="text"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  style={{ display: 'none' }}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+                
+                <div className='flex justify-start py-2'>
+                  <Recaptcha
+                    onVerify={handleRecaptchaVerify}
+                    onExpire={() => setRecaptchaToken('')}
+                  />
+                </div>
 
-                <Button className='h-10 w-fit cursor-pointer'>Send Message</Button>
-              </div>
+                <Button 
+                  type="submit"
+                  className='h-10 w-fit cursor-pointer'
+                  disabled={isLoading || !recaptchaToken}
+                >
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Send Message
+                </Button>
+              </form>
             </div>
           </CardContent>
         </Card>
