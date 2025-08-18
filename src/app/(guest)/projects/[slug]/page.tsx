@@ -121,6 +121,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           <Image 
             src={project.image} 
             alt={project.title}
+            width={1280}
+            height={720}
             className="w-full h-full object-cover"
           />
         </div>

@@ -244,6 +244,7 @@ export function ProjectEditor({ params }: ProjectEditorProps) {
                             ? URL.createObjectURL(project.thumbnail)
                             : project.thumbnailUrl || ''
                         }
+                        fill
                         alt="Thumbnail preview"
                         className="h-full w-full object-cover"
                       />

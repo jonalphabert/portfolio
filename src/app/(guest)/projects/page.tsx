@@ -70,6 +70,8 @@ export default async function ProjectsPage() {
                   <Image
                     src={project.image}
                     alt={project.title}
+                    width={480}
+                    height={270}
                     className='h-full w-full object-cover transition-transform duration-300 hover:scale-105'
                   />
                 </div>

@@ -163,6 +163,8 @@ const HorizontalCarouselGallery = ({
                     <Image
                       src={item.image}
                       alt={item.title}
+                      width={480}
+                      height={320}
                       className='absolute h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105'
                     />
                     <div className='absolute inset-0 h-full bg-gradient-to-t from-black/80 via-black/20 to-transparent' />

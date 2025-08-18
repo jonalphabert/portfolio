@@ -130,6 +130,8 @@ const ThreeColumnImageCards = () => {
               >
                 <Link href={`/blog/${post.blog_slug}`}>
                 <Image 
+                  width={480}
+                  height={360}
                   src={post.thumbnail?.image_path || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop'} 
                   alt={post.thumbnail?.image_alt || post.blog_title} 
                   className='aspect-video w-full object-cover' 
