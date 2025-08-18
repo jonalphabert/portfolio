@@ -2,10 +2,16 @@
 
 import { useEffect, useRef } from 'react';
 
-declare global {
-  interface Window {
-    grecaptcha: any;
-  }
+interface ReCaptchaInstance {
+  render: (container: HTMLElement, parameters: RenderParameters) => number;
+  reset: (widgetId: number) => void;
+}
+
+interface RenderParameters {
+  sitekey: string;
+  callback?: (token: string) => void;
+  'expired-callback'?: () => void;
+  'error-callback'?: () => void;
 }
 
 interface RecaptchaProps {
@@ -15,6 +21,7 @@ interface RecaptchaProps {
 }
 
 export function Recaptcha({ onVerify, onExpire, onError }: RecaptchaProps) {
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   const recaptchaRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<number | null>(null);
   const callbacksRef = useRef({ onVerify, onExpire, onError });
@@ -23,11 +30,19 @@ export function Recaptcha({ onVerify, onExpire, onError }: RecaptchaProps) {
   callbacksRef.current = { onVerify, onExpire, onError };
 
   useEffect(() => {
+    // Type assertion for window
+    const win = window as unknown as { grecaptcha?: ReCaptchaInstance };
+
+    if (!siteKey) {
+      console.error('reCAPTCHA site key is not defined. Please set NEXT_PUBLIC_RECAPTCHA_SITE_KEY environment variable.');
+      return;
+    }
+
     const renderRecaptcha = () => {
-      if (window.grecaptcha && window.grecaptcha.render && recaptchaRef.current && !widgetId.current) {
+      if (win.grecaptcha?.render && recaptchaRef.current && !widgetId.current) {
         try {
-          widgetId.current = window.grecaptcha.render(recaptchaRef.current, {
-            sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+          widgetId.current = win.grecaptcha.render(recaptchaRef.current, {
+            sitekey: siteKey,
             callback: (token: string) => callbacksRef.current.onVerify(token),
             'expired-callback': () => callbacksRef.current.onExpire?.(),
             'error-callback': () => callbacksRef.current.onError?.(),
@@ -41,7 +56,7 @@ export function Recaptcha({ onVerify, onExpire, onError }: RecaptchaProps) {
     const loadScript = () => {
       if (document.querySelector('script[src*="recaptcha"]')) {
         const checkReady = () => {
-          if (window.grecaptcha && window.grecaptcha.render) {
+          if (win.grecaptcha?.render) {
             renderRecaptcha();
           } else {
             setTimeout(checkReady, 100);
@@ -58,21 +73,33 @@ export function Recaptcha({ onVerify, onExpire, onError }: RecaptchaProps) {
       script.onload = () => {
         setTimeout(renderRecaptcha, 100);
       };
+      script.onerror = () => {
+        console.error('Failed to load reCAPTCHA script');
+        callbacksRef.current.onError?.();
+      };
       document.head.appendChild(script);
     };
 
     loadScript();
 
     return () => {
-      if (widgetId.current !== null && window.grecaptcha && window.grecaptcha.reset) {
+      if (widgetId.current !== null && win.grecaptcha?.reset) {
         try {
-          window.grecaptcha.reset(widgetId.current);
+          win.grecaptcha.reset(widgetId.current);
         } catch (error) {
           console.error('reCAPTCHA reset error:', error);
         }
       }
     };
-  }, []); // Empty dependency array - only run once
+  }, [siteKey]);
+
+  if (!siteKey) {
+    return (
+      <div className="text-red-500 p-4 border border-red-300 bg-red-50">
+        reCAPTCHA configuration error: Missing site key
+      </div>
+    );
+  }
 
   return <div className='w-full' ref={recaptchaRef} />;
 }

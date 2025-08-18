@@ -1,8 +1,31 @@
 import pool from '@/lib/db';
-import { ProjectFilters, CreateProjectData, UpdateProjectData, Project } from '@/types';
+import { ProjectFilters, CreateProjectData, UpdateProjectData, Project, SQLParam } from '@/types';
+
+interface ProjectQuery {
+  project_id: string;
+  project_title: string;
+  project_description: string;
+  project_slug: string;
+  project_content: string;
+  project_tech_stacks: string[];
+  project_user_id: string;
+  project_url: string;
+  project_github: string;
+  project_thumbnail: string;
+  project_status: 'draft' | 'published' | 'archived';
+  is_featured: boolean;
+  created_at: string;
+  published_at: string;
+  updated_at: string;
+  username: string;
+  email: string;
+  image_id?: string | undefined;
+  image_path?: string | undefined;
+  image_alt?: string | undefined;
+}
 
 export class ProjectService {
-  static mapRowToProject(row: any): Project {
+  static mapRowToProject(row: ProjectQuery): Project {
     return {
       project_id: row.project_id,
       project_title: row.project_title,
@@ -26,8 +49,8 @@ export class ProjectService {
       },
       thumbnail: row.image_id ? {
         image_id: row.image_id,
-        image_path: row.image_path,
-        image_alt: row.image_alt,
+        image_path: row.image_path || '',
+        image_alt: row.image_alt || '',
       } : undefined,
     };
   }
@@ -49,7 +72,7 @@ export class ProjectService {
       WHERE p.deleted_at IS NULL
     `;
 
-    const params: any[] = [];
+    const params: SQLParam[] = [];
     let paramIndex = 1;
 
     if (status) {
@@ -92,7 +115,7 @@ export class ProjectService {
       WHERE p.deleted_at IS NULL
     `;
     
-    const countParams: any[] = [];
+    const countParams: SQLParam[] = [];
     let countParamIndex = 1;
     
     if (status) {

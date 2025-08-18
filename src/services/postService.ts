@@ -1,5 +1,5 @@
 import pool from '@/lib/db';
-import { PostFilters, CreatePostData, UpdatePostData } from '@/types';
+import { PostFilters, CreatePostData, UpdatePostData, SQLParam, Category } from '@/types';
 
 export interface Post {
   blog_id: string;
@@ -60,7 +60,7 @@ export class PostService {
       WHERE b.deleted_at IS NULL
     `;
 
-    const params: any[] = [];
+    const params: SQLParam[] = [];
     let paramIndex = 1;
 
     if (status) {
@@ -111,7 +111,7 @@ export class PostService {
       WHERE b.deleted_at IS NULL
     `;
     
-    const countParams: any[] = [];
+    const countParams: SQLParam[] = [];
     let countParamIndex = 1;
     
     if (status) {
@@ -407,7 +407,7 @@ export class PostService {
     return result.rows.map(this.mapRowToPost);
   }
 
-  private static mapRowToPost(row: any): Post {
+  private static mapRowToPost(row: PostQuery): Post {
     return {
       blog_id: row.blog_id,
       blog_title: row.blog_title,
@@ -435,4 +435,25 @@ export class PostService {
       })
     };
   }
+}
+
+interface PostQuery{
+  blog_id: string;
+  blog_title: string;
+  blog_slug: string;
+  blog_content: string;
+  blog_description: string;
+  blog_tags: string[];
+  blog_status: 'draft' | 'published' | 'archived';
+  blog_views: number;
+  blog_likes: number;
+  created_at: string;
+  published_at: string | null;
+  updated_at: string;
+  username: string;
+  email: string;
+  categories: Category[];
+  image_id: string;
+  image_path: string;
+  image_alt: string;
 }

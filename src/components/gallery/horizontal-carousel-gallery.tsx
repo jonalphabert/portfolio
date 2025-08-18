@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import type { CarouselApi } from '@/components/ui/carousel';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export interface HorizontalCarouselGalleryItem {
   id: string;
@@ -159,7 +160,7 @@ const HorizontalCarouselGallery = ({
               <CarouselItem key={item.id} className='max-w-[320px] pl-[20px] lg:max-w-[360px]'>
                 <div className='group cursor-pointer rounded-xl'>
                   <div className='group relative h-full min-h-[27rem] max-w-full overflow-hidden rounded-2xl md:aspect-5/4 lg:aspect-16/9'>
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.title}
                       className='absolute h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105'

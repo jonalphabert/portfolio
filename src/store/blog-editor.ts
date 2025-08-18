@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { BlogEditorPost, Category } from '@/types';
+import { BlogEditorPost } from '@/types';
 
 // Using BlogEditorPost from @/types
 

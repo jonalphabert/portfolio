@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Recaptcha } from '@/components/forms/recaptcha';
 import { toast } from 'sonner';
 import { stat } from 'fs';
+import Link from 'next/link';
 
 const CardContactForm = () => {
   const [formData, setFormData] = useState({
@@ -102,32 +103,29 @@ const CardContactForm = () => {
 
                 <ul className='max-w-lg space-y-3 tracking-tight'>
                   <li className='block items-center md:flex'>
-                    <span className='flex'>
-                      <Mail className='text-accent mr-3 h-5 w-5' />
-                      <span className='mr-2 font-bold'>Email:</span>
-                    </span>
-                    <span className='text-foreground/80 underline'>hello@developer.com</span>
+                    <Link className='md:flex text-foreground' href='https://www.linkedin.com/in/johnforjc/'>
+                      <span className='flex'>
+                        <Linkedin className='text-accent mr-3 h-5 w-5' />
+                        <span className='mr-2 font-bold'>LinkedIn:</span>
+                      </span>
+                      <span className='text-foreground/80 underline'>/in/johnforjc/</span>
+                    </Link>
                   </li>
                   <li className='block items-center md:flex'>
-                    <span className='flex'>
-                      <Linkedin className='text-accent mr-3 h-5 w-5' />
-                      <span className='mr-2 font-bold'>LinkedIn:</span>
-                    </span>
-                    <span className='text-foreground/80 underline'>/in/developer</span>
-                  </li>
-                  <li className='block items-center md:flex'>
-                    <span className='flex'>
-                      <Github className='text-accent mr-3 h-5 w-5' />
-                      <span className='mr-2 font-bold'>GitHub:</span>
-                    </span>
-                    <span className='text-foreground/80 underline'>github.com/developer</span>
+                    <Link className='md:flex text-foreground' href='https://github.com/jonalphabert'>
+                      <span className='flex'>
+                        <Github className='text-accent mr-3 h-5 w-5' />
+                        <span className='mr-2 font-bold'>GitHub:</span>
+                      </span>
+                      <span className='text-foreground/80 underline'>jonalphabert</span>
+                    </Link>
                   </li>
                   <li className='block items-center md:flex'>
                     <span className='flex'>
                       <MapPin className='text-accent mr-3 h-5 w-5' />
                       <span className='mr-2 font-bold'>Location:</span>
                     </span>
-                    <span className='text-foreground/80'>San Francisco, CA</span>
+                    <span className='text-foreground/80'>Surabaya. ID</span>
                   </li>
                 </ul>
                 <p className='text-muted-foreground leading-relaxed'>

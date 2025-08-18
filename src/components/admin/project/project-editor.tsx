@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useProjectEditor } from '@/store/project-editor';
 import { ProjectSaveModal } from './project-save-modal';
 import { MarkdownEditor } from '@/components/ui/markdown-editor';
+import Image from 'next/image';
 
 interface ProjectEditorProps {
   params?: Promise<{ slug: string }>;
@@ -237,7 +238,7 @@ export function ProjectEditor({ params }: ProjectEditorProps) {
                   />
                   {(project.thumbnail || project.thumbnailUrl) && (
                     <div className="relative aspect-video overflow-hidden rounded-md border">
-                      <img
+                      <Image
                         src={
                           project.thumbnail
                             ? URL.createObjectURL(project.thumbnail)

@@ -8,7 +8,7 @@ import { PublicBlogPost, RelatedPost } from '@/types';
 // Fetch blog post from API
 async function getBlogPost(slug: string): Promise<PublicBlogPost | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/post/${slug}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/guest/blog/${slug}`, {
       cache: 'no-store'
     });
     
@@ -18,26 +18,24 @@ async function getBlogPost(slug: string): Promise<PublicBlogPost | null> {
     
     const data = await response.json();
     
-    // Transform API response to BlogPost format
+    // Transform guest API response to BlogPost format
     return {
-      slug: data.blog_slug,
-      title: data.blog_title,
-      content: data.blog_content,
-      excerpt: data.blog_description || '',
-      publishedDate: data.published_at ? new Date(data.published_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      readTime: Math.ceil(data.blog_content.split(' ').length / 200) || 5,
-      category: data.categories && data.categories.length > 0 
-        ? data.categories.map((cat: any) => cat.category_name).join(', ')
-        : 'Uncategorized',
+      slug: data.slug,
+      title: data.title,
+      content: data.content,
+      excerpt: data.description || '',
+      publishedDate: new Date(data.publishedDate).toISOString().split('T')[0],
+      readTime: Math.ceil(data.content.split(' ').length / 200) || 5,
+      category: data.tags && data.tags.length > 0 ? data.tags[0] : 'Uncategorized',
       author: {
-        name: data.author.username,
+        name: data.author.name,
         avatar: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
         bio: 'Content creator and developer.',
       },
       featuredImage: data.thumbnail 
-        ? data.thumbnail.image_path 
+        ? data.thumbnail.url 
         : 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
-      tags: data.blog_tags || [],
+      tags: data.tags || [],
     } as PublicBlogPost;
   } catch (error) {
     console.error('Error fetching blog post:', error);
@@ -48,7 +46,7 @@ async function getBlogPost(slug: string): Promise<PublicBlogPost | null> {
 // Fetch related posts from API
 async function getRelatedPosts(currentSlug: string): Promise<RelatedPost[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/post/${currentSlug}/related?limit=3`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/guest/blog?limit=3`, {
       cache: 'no-store'
     });
     
@@ -59,19 +57,20 @@ async function getRelatedPosts(currentSlug: string): Promise<RelatedPost[]> {
     const data = await response.json();
     const posts = data.posts || [];
     
-    // Transform API response to RelatedPost format
-    return posts.map((post: any) => ({
-      slug: post.blog_slug,
-      title: post.blog_title,
-      excerpt: post.blog_description || post.blog_content.substring(0, 150) + '...',
-      category: post.categories && post.categories.length > 0 
-        ? post.categories[0].category_name 
-        : 'Uncategorized',
-      readTime: Math.ceil(post.blog_content.split(' ').length / 200) || 5,
-      featuredImage: post.thumbnail 
-        ? post.thumbnail.image_path 
-        : 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
-    }));
+    // Filter out current post and transform to RelatedPost format
+    return posts
+      .filter((post: { slug: string }) => post.slug !== currentSlug)
+      .slice(0, 3)
+      .map((post: { slug: string; title: string; description: string; content: string; tags: string[]; thumbnail?: { url: string } }) => ({
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.description || post.content.substring(0, 150) + '...',
+        category: post.tags && post.tags.length > 0 ? post.tags[0] : 'Uncategorized',
+        readTime: Math.ceil(post.content.split(' ').length / 200) || 5,
+        featuredImage: post.thumbnail 
+          ? post.thumbnail.url 
+          : 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',
+      }));
   } catch (error) {
     console.error('Error fetching related posts:', error);
     return [];

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useProjectEditor } from '@/store/project-editor';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export function ProjectSaveModal() {
   const router = useRouter();
@@ -157,7 +158,7 @@ export function ProjectSaveModal() {
             <div className="space-y-2">
               <Label>Thumbnail</Label>
               <div className="relative aspect-video w-32 overflow-hidden rounded-md border">
-                <img
+                <Image
                   src={
                     project.thumbnail
                       ? URL.createObjectURL(project.thumbnail)

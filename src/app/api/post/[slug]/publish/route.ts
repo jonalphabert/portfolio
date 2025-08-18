@@ -3,10 +3,12 @@ import { PostService } from '@/services/postService';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const publishedPost = await PostService.updatePostStatus(params.slug, 'published');
+    const resolvedParams = await params;
+    const { slug } = resolvedParams;
+    const publishedPost = await PostService.updatePostStatus(slug, 'published');
 
     if (!publishedPost) {
       return NextResponse.json(

@@ -11,7 +11,8 @@ type ReporterProps = {
 export default function ErrorReporter({ error }: ReporterProps) {
   /* ─ instrumentation shared by every route ─ */
   const lastOverlayMsg = useRef('');
-  const pollRef = useRef<NodeJS.Timeout>();
+  // Fixed: Added null as initial value and updated type
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const inIframe = window.parent !== window;

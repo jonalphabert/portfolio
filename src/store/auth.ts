@@ -23,7 +23,7 @@ interface AuthState {
 
 export const useAuth = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set, _) => ({
       user: null,
       isAuthenticated: false,
       isSetupComplete: false,
@@ -69,7 +69,7 @@ export const useAuth = create<AuthState>()(
           }
 
           return true;
-        } catch (error) {
+        } catch (_) {
           return false;
         }
       },
@@ -121,7 +121,7 @@ export const useAuth = create<AuthState>()(
           });
 
           return true;
-        } catch (error) {
+        } catch (_) {
           return false;
         }
       },

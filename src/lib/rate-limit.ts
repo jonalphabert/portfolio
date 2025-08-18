@@ -14,7 +14,10 @@ export function rateLimit(
   limit: number = 5, // max requests
   windowMs: number = 15 * 60 * 1000 // 15 minutes
 ): { success: boolean; remaining: number; resetTime: number } {
-  const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+  const ip = 
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+    request.headers.get('x-real-ip') || 
+    'unknown';
   const now = Date.now();
   
   // Clean up expired entries

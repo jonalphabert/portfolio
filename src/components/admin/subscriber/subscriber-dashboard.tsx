@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Users, UserPlus, UserMinus, Mail, Calendar, 
-  TrendingUp, Send, Loader2 
+  Users, UserPlus, UserMinus, Mail, Calendar, Send
 } from 'lucide-react';
 import { BroadcastModal } from './broadcast-modal';
 

@@ -3,13 +3,15 @@ import { PostService } from '@/services/postService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const isAvailable = await PostService.checkSlugAvailability(params.slug);
+    const resolvedParams = await params;
+    const { slug } = resolvedParams;
+    const isAvailable = await PostService.checkSlugAvailability(slug);
 
     return NextResponse.json({
-      slug: params.slug,
+      slug: slug,
       available: isAvailable
     });
   } catch (error: unknown) {

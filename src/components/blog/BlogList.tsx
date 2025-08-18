@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,15 +13,7 @@ import { BlogPost } from '@/types';
 
 const POSTS_PER_PAGE = 6;
 
-const categories = [
-  'All',
-  'React',
-  'CSS',
-  'JavaScript',
-  'Tutorial',
-  'Industry Insights',
-  'Project Retrospective',
-];
+
 
 const sortOptions = [
   { value: 'latest', label: 'Latest' },
@@ -69,7 +61,6 @@ export default function BlogList() {
     try {
       setLoading(true);
       const params = new URLSearchParams({
-        status: 'published',
         limit: POSTS_PER_PAGE.toString(),
         page: page.toString(),
         sort: sort,
@@ -77,10 +68,44 @@ export default function BlogList() {
         ...(category !== 'All' && { category })
       });
       
-      const response = await fetch(`/api/post?${params}`);
+      const response = await fetch(`/api/guest/blog?${params}`);
       const data = await response.json();
-      console.log(data)
-      setPosts(data.posts || []);
+      
+      // Transform guest API response to match BlogPost interface
+      const transformedPosts = data.posts.map((post: {
+        slug: string;
+        title: string;
+        content: string;
+        tags: string[];
+        views: number;
+        description: string;
+        publishedDate: string;
+        author: { name: string };
+        thumbnail?: { url: string; alt: string };
+      }) => ({
+        blog_id: post.slug,
+        blog_title: post.title,
+        blog_slug: post.slug,
+        blog_content: post.content,
+        blog_tags: post.tags,
+        blog_status: 'published',
+        blog_views: post.views,
+        blog_description: post.description,
+        created_at: post.publishedDate,
+        published_at: post.publishedDate,
+        updated_at: post.publishedDate,
+        author: {
+          username: post.author.name,
+          email: ''
+        },
+        thumbnail: post.thumbnail ? {
+          image_id: '',
+          image_path: post.thumbnail.url,
+          image_alt: post.thumbnail.alt
+        } : undefined
+      }));
+      
+      setPosts(transformedPosts);
       setTotalPosts(data.total || 0);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -115,10 +140,7 @@ export default function BlogList() {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-  };
+
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);

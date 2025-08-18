@@ -1,9 +1,8 @@
-import { Github, Linkedin, Mail, MapPin, Instagram, Youtube } from 'lucide-react';
-import { FaTiktok } from 'react-icons/fa';
-import { Button } from '@/components/ui/button';
+import { Github, Linkedin, MapPin, Instagram } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ContactForm } from '@/components/forms/contact-form';
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Contact | Portfolio',
@@ -18,33 +17,33 @@ const socialLinks = [
   {
     name: 'GitHub',
     icon: Github,
-    url: 'https://github.com/developer',
+    url: 'https://github.com/jonalphabert',
     color: 'hover:text-gray-900',
   },
   {
     name: 'LinkedIn',
     icon: Linkedin,
-    url: 'https://linkedin.com/in/developer',
+    url: 'https://www.linkedin.com/in/johnforjc/',
     color: 'hover:text-blue-600',
   },
   {
     name: 'Instagram',
     icon: Instagram,
-    url: 'https://instagram.com/developer',
+    url: 'https://www.instagram.com/john.forjc/',
     color: 'hover:text-pink-600',
   },
-  {
-    name: 'YouTube',
-    icon: Youtube,
-    url: 'https://youtube.com/@developer',
-    color: 'hover:text-red-600',
-  },
-  {
-    name: 'TikTok',
-    icon: FaTiktok,
-    url: 'https://tiktok.com/@developer',
-    color: 'hover:text-black',
-  },
+  // {
+  //   name: 'YouTube',
+  //   icon: Youtube,
+  //   url: 'https://youtube.com/@developer',
+  //   color: 'hover:text-red-600',
+  // },
+  // {
+  //   name: 'TikTok',
+  //   icon: FaTiktok,
+  //   url: 'https://tiktok.com/@developer',
+  //   color: 'hover:text-black',
+  // },
 ];
 
 export default function ContactPage() {
@@ -64,23 +63,31 @@ export default function ContactPage() {
             <div>
               <h2 className='mb-6 text-2xl font-bold'>Let&apos;s Connect</h2>
               <div className='space-y-4'>
-                <div className='flex items-center gap-4'>
-                  <Mail className='text-primary h-6 w-6' />
-                  <div>
-                    <p className='font-medium'>Email</p>
-                    <a
-                      href='mailto:hello@developer.com'
-                      className='text-muted-foreground hover:text-foreground'
-                    >
-                      hello@developer.com
-                    </a>
+                <Link className='md:flex text-foreground' href='https://www.linkedin.com/in/johnforjc/'>
+                  <div className='flex items-center gap-4'>
+                    <Linkedin className='text-primary h-6 w-6' />
+                    <div>
+                      <p className='font-medium'>LinkedIn</p>
+                      <p className='text-muted-foreground'>/in/johnforjc/</p>
+                    </div>
                   </div>
-                </div>
+                </Link>
+
+                <Link className='md:flex text-foreground' href='https://github.com/jonalphabert'>
+                  <div className='flex items-center gap-4'>
+                    <Github className='text-primary h-6 w-6' />
+                    <div>
+                      <p className='font-medium'>GitHub:</p>
+                      <p className='text-muted-foreground'>jonalphabert</p>
+                    </div>
+                  </div>
+                </Link>
+                
                 <div className='flex items-center gap-4'>
                   <MapPin className='text-primary h-6 w-6' />
                   <div>
                     <p className='font-medium'>Location</p>
-                    <p className='text-muted-foreground'>San Francisco, CA</p>
+                    <p className='text-muted-foreground'>Surabaya, ID</p>
                   </div>
                 </div>
               </div>
