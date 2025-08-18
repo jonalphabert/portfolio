@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { name, email, subject, message, recaptchaToken, website } = await request.json();
+    console.log('Contact form data:', { name, email, subject, message, recaptchaToken, website });
 
     // Honeypot check - if filled, it's likely a bot
     if (website) {

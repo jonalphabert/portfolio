@@ -12,7 +12,7 @@ export class ContactService {
         contact_name, 
         contact_email, 
         contact_subject, 
-        contact_message,
+        contact_content,
         contact_created_at
       ) VALUES ($1, $2, $3, $4, NOW())
       RETURNING contact_id
@@ -46,7 +46,8 @@ export class ContactService {
       });
 
       const data = await response.json();
-      return data.success && data.score > 0.5; // Score threshold for v3
+      console.log('ReCAPTCHA verification result:', data);
+      return data.success; // Score threshold for v3
     } catch (error) {
       console.error('reCAPTCHA verification error:', error);
       return false;

@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Calendar, Clock, Tag, Share2, User } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Tag, Share2 } from 'lucide-react';
 import { processMarkdown } from '@/lib/markdown';
 import { PublicBlogPost, RelatedPost } from '@/types';
+import SubscribeSection from '../subscribe/subscribe-section';
 
 interface BlogPostContentProps {
   post: PublicBlogPost;
@@ -119,15 +120,17 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
                   </div>
                   <div>
                     <div className='mb-2 flex items-center gap-2'>
-                      <User className='h-4 w-4' />
                       <h3 className='font-semibold'>{post.author.name}</h3>
                     </div>
-                    <p className='text-muted-foreground'>{post.author.bio}</p>
+                    <p className='text-muted-foreground mb-4'>{post.author.bio}</p>
+                    <SubscribeSection />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          
 
           {/* Related Posts */}
           {relatedPosts.length > 0 && (
