@@ -68,4 +68,19 @@ export class SubscriberService {
       total: parseInt(countResult.rows[0].total)
     };
   }
+
+  static async createSubscriber({name, email}: {name: string, email: string}) {
+    const query = `
+      INSERT INTO subscription (
+        subscription_name, 
+        subscription_email, 
+        subscription_created_at
+      ) VALUES ($1, $2, NOW())
+      RETURNING subscription_id
+    `;
+
+    const result = await pool.query(query, [name, email])
+
+    return result.rows[0];
+  }
 }
