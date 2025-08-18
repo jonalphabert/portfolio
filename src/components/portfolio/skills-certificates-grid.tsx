@@ -1,15 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Code2,
   Database,
   Wrench,
   Cloud,
-  Award,
   ExternalLink,
   CheckCircle,
   Calendar,

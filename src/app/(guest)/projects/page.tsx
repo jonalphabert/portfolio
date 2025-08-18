@@ -1,8 +1,9 @@
-import { Calendar, ExternalLink, Github } from 'lucide-react';
+import { ExternalLink, Github } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Metadata } from 'next';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Featured Projects | Portfolio',
@@ -66,7 +67,7 @@ export default async function ProjectsPage() {
                 className='overflow-hidden py-0 transition-shadow hover:shadow-lg'
               >
                 <div className='aspect-video overflow-hidden'>
-                  <img
+                  <Image
                     src={project.image}
                     alt={project.title}
                     className='h-full w-full object-cover transition-transform duration-300 hover:scale-105'

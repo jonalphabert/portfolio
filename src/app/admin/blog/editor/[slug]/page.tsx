@@ -3,13 +3,18 @@
 import { useEffect } from 'react';
 import { BlogEditor } from '@/components/admin/blog/blog-editor';
 import { useBlogEditor } from '@/store/blog-editor';
+import { useParams } from 'next/navigation';
 
-export default function BlogEditorSlugPage({ params }: { params: { slug: string } }) {
+export default function BlogEditorSlugPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug as string;
   const { isLoading, loadBlogBySlug } = useBlogEditor();
 
   useEffect(() => {
-    loadBlogBySlug(params.slug);
-  }, [params.slug, loadBlogBySlug]);
+    if (slug) {
+      loadBlogBySlug(slug);
+    }
+  }, [slug, loadBlogBySlug]);
 
   if (isLoading) {
     return (
@@ -22,5 +27,5 @@ export default function BlogEditorSlugPage({ params }: { params: { slug: string 
     );
   }
 
-  return <BlogEditor mode="edit" slug={params.slug} />;
+  return <BlogEditor mode="edit" slug={slug} />;
 }

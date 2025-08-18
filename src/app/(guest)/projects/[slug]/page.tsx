@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Metadata } from 'next'
 import { processMarkdown } from '@/lib/markdown'
+import Image from 'next/image'
 
 
 interface Project {
@@ -117,7 +118,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         </div>
 
         <div className="aspect-video mb-12 overflow-hidden rounded-lg">
-          <img 
+          <Image 
             src={project.image} 
             alt={project.title}
             className="w-full h-full object-cover"

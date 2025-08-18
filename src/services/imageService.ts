@@ -1,4 +1,5 @@
 import pool from '@/lib/db';
+import { SQLParam } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({
@@ -44,7 +45,7 @@ export class ImageService {
       WHERE deleted_at IS NULL
     `;
 
-    const params: any[] = [];
+    const params: SQLParam[] = [];
     let paramIndex = 1;
 
     if (search) {

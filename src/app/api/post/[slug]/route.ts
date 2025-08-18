@@ -3,10 +3,12 @@ import { PostService } from '@/services/postService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const post = await PostService.getPostBySlug(params.slug);
+    const resolvedParams = await params;
+    const { slug } = resolvedParams;
+    const post = await PostService.getPostBySlug(slug);
 
     if (!post) {
       return NextResponse.json(
@@ -27,12 +29,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const resolvedParams = await params;
+    const { slug } = resolvedParams;
     const { title, content, tags } = await request.json();
 
-    const updatedPost = await PostService.updatePost(params.slug, {
+    const updatedPost = await PostService.updatePost(slug, {
       title,
       content,
       tags
@@ -57,10 +61,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const archivedPost = await PostService.archivePost(params.slug);
+    const resolvedParams = await params;
+    const { slug } = resolvedParams;
+    const archivedPost = await PostService.archivePost(slug);
 
     if (!archivedPost) {
       return NextResponse.json(

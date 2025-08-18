@@ -6,12 +6,13 @@ import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { BlogPost } from '@/types';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 // Using BlogPost from @/types
 
 async function getLatestPosts(): Promise<BlogPost[]> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/post?status=published&limit=3`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/guest/blog?limit=3`, {
       next: { revalidate: 604800 } // 1 week = 7 days * 24 hours * 60 minutes * 60 seconds
     });
     
@@ -20,7 +21,43 @@ async function getLatestPosts(): Promise<BlogPost[]> {
     }
     
     const data = await response.json();
-    return data.posts || [];
+    
+    // Transform guest API response to match BlogPost interface
+    const transformedPosts = data.posts.map((post: {
+      slug: string;
+      title: string;
+      content: string;
+      tags: string[];
+      views: number;
+      description: string;
+      publishedDate: string;
+      author: { name: string };
+      thumbnail?: { url: string; alt: string };
+    }) => ({
+      blog_id: post.slug,
+      blog_title: post.title,
+      blog_slug: post.slug,
+      blog_content: post.content,
+      blog_tags: post.tags,
+      blog_status: 'published',
+      blog_views: post.views,
+      blog_description: post.description,
+      created_at: post.publishedDate,
+      published_at: post.publishedDate,
+      updated_at: post.publishedDate,
+      author: {
+        username: post.author.name,
+        email: ''
+      },
+      thumbnail: post.thumbnail ? {
+        image_id: '',
+        image_path: post.thumbnail.url,
+        image_alt: post.thumbnail.alt
+      } : undefined,
+      categories: post.tags.length > 0 ? [{ category_name: post.tags[0] }] : []
+    }));
+    
+    return transformedPosts;
   } catch (error) {
     console.error('Error fetching latest posts:', error);
     return [];
@@ -92,7 +129,7 @@ const ThreeColumnImageCards = () => {
                 className='bg-card overflow-hidden border-0 py-0 transition-shadow duration-300 hover:shadow-lg'
               >
                 <Link href={`/blog/${post.blog_slug}`}>
-                <img 
+                <Image 
                   src={post.thumbnail?.image_path || 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop'} 
                   alt={post.thumbnail?.image_alt || post.blog_title} 
                   className='aspect-video w-full object-cover' 

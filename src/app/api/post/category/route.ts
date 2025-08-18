@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       RETURNING blog_id, category_id
     `;
 
-    const result = await pool.query(query, [blog_id, category_id]);
+    await pool.query(query, [blog_id, category_id]);
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

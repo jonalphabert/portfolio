@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import pool from '@/lib/db';
 
-interface PostgreSQLError {
-  code: string;
-  message: string;
-}
-
 export async function GET() {
   try {
     const query = 'SELECT COUNT(*) FROM user_admin';

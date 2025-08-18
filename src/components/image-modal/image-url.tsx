@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import Image from 'next/image';
 import { useImageModal } from '@/store/image-modal';
 import { useBlogEditor } from '@/store/blog-editor';
+import Image from 'next/image';
 
 export function ImageUrl() {
   const [url, setUrl] = useState('');
@@ -83,7 +83,7 @@ export function ImageUrl() {
         <div className="space-y-2">
           <Label>Image Preview</Label>
           <div className="border rounded-lg p-4 bg-muted/20">
-            <img
+            <Image
               src={url}
               alt="Preview"
               width={300}

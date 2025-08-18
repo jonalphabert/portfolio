@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { X } from 'lucide-react';
+import Image from 'next/image';
 
 const navigation = [
   { name: 'About', href: '#' },
@@ -26,7 +27,7 @@ export function MinimalCenteredHero() {
             <div className='flex items-center justify-between'>
               <a href='#' className='-m-1.5 p-1.5'>
                 <span className='sr-only'>Portfolio</span>
-                <img
+                <Image
                   alt=''
                   src='https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600'
                   className='h-8 w-auto'

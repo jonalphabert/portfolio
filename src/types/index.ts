@@ -30,6 +30,8 @@ export interface ImageUploaded {
   updated_at?: string;
 }
 
+export type SQLParam = string | number | boolean | null | Date;
+
 // Blog Post Types
 export interface BlogPost {
   blog_id: string;

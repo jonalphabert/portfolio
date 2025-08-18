@@ -3,7 +3,6 @@ import { HorizontalCarouselGallery } from '@/components/gallery/horizontal-carou
 import SkillsCertificatesGrid from '@/components/portfolio/skills-certificates-grid';
 import { ThreeColumnImageCards } from '@/components/feature/three-column-image-cards';
 import { CardContactForm } from '@/components/contact/card-contact-form';
-import { MinimalCenteredFooter } from '@/components/footers/minimal-centered-footer';
 
 export default function Page() {
   return (
