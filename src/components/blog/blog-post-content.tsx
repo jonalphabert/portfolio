@@ -135,7 +135,7 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
               <h2 className='mb-6 text-2xl font-bold'>Related Posts</h2>
               <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
                 {relatedPosts.map((relatedPost) => (
-                  <Card key={relatedPost.slug} className='hover:shadow-lg transition-shadow'>
+                  <Card key={relatedPost.slug} className='hover:shadow-lg transition-shadow py-0'>
                     <div className='relative h-48 overflow-hidden rounded-t-lg'>
                       <Image
                         src={relatedPost.featuredImage}

@@ -165,6 +165,7 @@ export function ProjectSaveModal() {
                       : project.thumbnailUrl || ''
                   }
                   alt="Thumbnail preview"
+                  fill
                   className="h-full w-full object-cover"
                 />
               </div>
