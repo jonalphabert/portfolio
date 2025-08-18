@@ -221,3 +221,24 @@ export interface UpdateProjectData {
   project_github?: string;
   project_thumbnail?: string;
 }
+
+export interface Subscriber{
+  subscription_id: string;
+  subscription_name: string;
+  subscription_email: string;
+  subscription_created_at: string;
+  subscription_updated_at: string;
+};
+
+export interface PostStat{
+  totalPost: number;
+  publishedPost: number;
+  draftPost: number;
+  totalViews: number;
+};
+
+export interface SubscriberStat{
+  newSubscribers: number;
+  unsubscribed: number;
+  activeSubscribers: number;
+}
