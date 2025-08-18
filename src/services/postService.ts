@@ -407,6 +407,47 @@ export class PostService {
     return result.rows.map(this.mapRowToPost);
   }
 
+  static async getPostStats() {
+    // Get total post
+    const getTotalPost = `
+      SELECT COUNT(*) as count
+      FROM blog 
+      WHERE deleted_at IS NULL
+    `;
+    const getTotalPostResult = await pool.query(getTotalPost);
+
+    // Get total post
+    const getPublishedTotalPost = `
+      SELECT COUNT(*) as count
+      FROM blog 
+      WHERE deleted_at IS NULL AND blog_status = 'published'
+    `;
+    const getPublishedPostResult = await pool.query(getPublishedTotalPost);
+
+    // Get total post
+    const getDraftTotalPost = `
+      SELECT COUNT(*) as count
+      FROM blog 
+      WHERE deleted_at IS NULL AND blog_status = 'draft'
+    `;
+    const getDraftPostResult = await pool.query(getDraftTotalPost);
+
+    // Get total view post
+    const getTotalViewsPost = `
+      SELECT SUM(blog_views) as count
+      FROM blog 
+      WHERE deleted_at IS NULL
+    `;
+    const getTotalViewsPostResult = await pool.query(getTotalViewsPost);
+
+    return {
+      totalPost: parseInt(getTotalPostResult.rows[0].count),
+      publishedPost: parseInt(getPublishedPostResult.rows[0].count),
+      draftPost: parseInt(getDraftPostResult.rows[0].count),
+      totalViews: parseInt(getTotalViewsPostResult.rows[0].count)
+    };
+  }
+
   private static mapRowToPost(row: PostQuery): Post {
     return {
       blog_id: row.blog_id,

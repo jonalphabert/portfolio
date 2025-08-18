@@ -22,8 +22,8 @@ const colorClasses = {
 
 export function StatsCard({ title, value, icon: Icon, trend, color = 'default' }: StatsCardProps) {
   return (
-    <Card>
-      <CardContent className='p-6'>
+    <Card className='flex justify-center'>
+      <CardContent>
         <div className='flex items-center justify-between'>
           <div>
             <p className='text-muted-foreground text-sm font-medium'>{title}</p>

@@ -9,7 +9,7 @@ const actions = [
     description: 'Create a new blog post',
     icon: Plus,
     href: '/admin/blog/editor',
-    color: 'bg-accent text-accent-foreground',
+    color: 'bg-muted text-muted-foreground',
   },
   {
     title: 'Manage Posts',
@@ -41,21 +41,21 @@ export function QuickActions() {
         <CardTitle>Quick Actions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className='grid grid-cols-2 gap-3'>
+        <div className='grid grid-cols-4 gap-3'>
           {actions.map((action) => {
             const Icon = action.icon;
             return (
               <Link key={action.title} href={action.href}>
                 <Button
                   variant='outline'
-                  className='flex h-auto w-full cursor-pointer flex-col items-start gap-2 p-4'
+                  className='flex h-auto w-full cursor-pointer flex-col md:flex-row md:justify-start md:gap-8 md:p-6 items-start gap-2 p-4 group'
                 >
                   <div className={`rounded-lg p-2 ${action.color}`}>
                     <Icon className='h-4 w-4' />
                   </div>
                   <div className='text-left'>
                     <div className='text-sm font-medium'>{action.title}</div>
-                    <div className='text-muted-foreground text-xs'>{action.description}</div>
+                    <div className='text-muted-foreground text-xs group-hover:text-accent-foreground'>{action.description}</div>
                   </div>
                 </Button>
               </Link>
