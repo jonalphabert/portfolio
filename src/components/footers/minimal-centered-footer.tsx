@@ -8,9 +8,9 @@ const MinimalCenteredFooter = () => {
   ];
 
   const social = [
-    { name: 'GitHub', href: 'https://github.com/yourusername', icon: Github },
-    { name: 'LinkedIn', href: 'https://linkedin.com/in/yourprofile', icon: Linkedin },
-    { name: 'Twitter', href: 'https://twitter.com/yourusername', icon: Twitter },
+    { name: 'GitHub', href: 'https://github.com/jonalphabert', icon: Github },
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/in/johnforjc/', icon: Linkedin },
+    // { name: 'Twitter', href: 'https://twitter.com/yourusername', icon: Twitter },
   ];
 
   const legal = [
