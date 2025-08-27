@@ -26,7 +26,7 @@ export function MinimalCenteredHero() {
           >
             <div className='flex items-center justify-between'>
               <a href='#' className='-m-1.5 p-1.5'>
-                <span className='sr-only'>Portfolio</span>
+                <span className='sr-only'>JONATHAN</span>
                 <Image
                   width={32}
                   height={32}
