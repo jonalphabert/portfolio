@@ -1,13 +1,14 @@
 'use client';
 
 import { ArrowLeft, ArrowRight, Github, ExternalLink } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import type { CarouselApi } from '@/components/ui/carousel';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export interface HorizontalCarouselGalleryItem {
   id: string;
@@ -37,6 +38,7 @@ const HorizontalCarouselGallery = ({
   viewAllText = 'View All Projects',
   viewAllHref = '/projects',
 }: HorizontalCarouselGalleryProps) => {
+  const router = useRouter();
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -78,6 +80,10 @@ const HorizontalCarouselGallery = ({
       carouselApi.off('select', updateSelection);
     };
   }, [carouselApi]);
+
+  const handleProjectClick = (project: HorizontalCarouselGalleryItem) => {
+    router.push(`/projects/${project.slug}`);
+  };
 
   return (
     <section className='bg-surface py-32'>
@@ -157,63 +163,66 @@ const HorizontalCarouselGallery = ({
               ))
             ) : (
               projects.map((item) => (
-              <CarouselItem key={item.id} className='max-w-[320px] pl-[20px] lg:max-w-[360px]'>
-                <div className='group cursor-pointer rounded-xl'>
-                  <div className='group relative h-full min-h-[27rem] max-w-full overflow-hidden rounded-2xl md:aspect-5/4 lg:aspect-16/9'>
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      width={480}
-                      height={320}
-                      className='absolute h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105'
-                    />
-                    <div className='absolute inset-0 h-full bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
-                    <div className='absolute inset-x-0 bottom-0 flex flex-col items-start p-6 text-white md:p-8'>
-                      <div className='mb-3 flex flex-wrap gap-2'>
-                        {item.technologies.slice(0, 3).map((tech) => (
-                          <span
-                            key={tech}
-                            className='rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-sm'
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                        {item.technologies.length > 3 && (
-                          <span className='rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-sm'>
-                            +{item.technologies.length - 3}
-                          </span>
-                        )}
-                      </div>
-                      <div className='mb-2 pt-2 text-xl font-semibold md:mb-3 md:pt-2 lg:pt-2'>
-                        {item.title}
-                      </div>
-                      <div className='mb-6 line-clamp-2 text-sm opacity-90 md:mb-8 lg:mb-6'>
-                        {item.description}
-                      </div>
-                      <div className='flex gap-3'>
-                        <Link
-                          href={`/projects/${item.slug}`}
-                          rel='noopener noreferrer'
-                          className='inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/20'
-                        >
-                          <ExternalLink className='size-4' />
-                          View Project
-                        </Link>
-                        {item.githubUrl && (
-                          <a
-                            href={item.githubUrl}
-                            target='_blank'
+              <CarouselItem key={item.id} className='max-w-[320px] pl-[20px] lg:max-w-[360px]' onClick={() => handleProjectClick(item)}>
+                
+                  <div className='group cursor-pointer rounded-xl'>
+                    <div className='group relative h-full min-h-[27rem] max-w-full overflow-hidden rounded-2xl md:aspect-5/4 lg:aspect-16/9'>
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        width={480}
+                        height={320}
+                        className='absolute h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105'
+                      />
+
+                      <div className='absolute inset-0 h-full bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
+                      <div className='absolute inset-x-0 bottom-0 flex flex-col items-start p-6 text-white md:p-8'>
+                        <div className='mb-3 flex flex-wrap gap-2'>
+                          {item.technologies.slice(0, 3).map((tech) => (
+                            <span
+                              key={tech}
+                              className='rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-sm'
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                          {item.technologies.length > 3 && (
+                            <span className='rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur-sm'>
+                              +{item.technologies.length - 3}
+                            </span>
+                          )}
+                        </div>
+                        <div className='mb-2 pt-2 text-xl font-semibold md:mb-3 md:pt-2 lg:pt-2'>
+                          {item.title}
+                        </div>
+                        <div className='mb-6 line-clamp-2 text-sm opacity-90 md:mb-8 lg:mb-6'>
+                          {item.description}
+                        </div>
+                        <div className='flex gap-3'>
+                          <Link
+                            href={`/projects/${item.slug}`}
                             rel='noopener noreferrer'
                             className='inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/20'
                           >
-                            <Github className='size-4' />
-                            Code
-                          </a>
-                        )}
+                            <ExternalLink className='size-4' />
+                            View Project
+                          </Link>
+                          {item.githubUrl && (
+                            <Link
+                              href={item.githubUrl}
+                              target={item.githubUrl == '#' || item.githubUrl == '' ? '_self' : '_blank'}
+                              rel='noopener noreferrer'
+                              className='inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm transition-colors hover:bg-white/20'
+                            >
+                              <Github className='size-4' />
+                              Code
+                            </Link>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+
               </CarouselItem>
             ))
             )}

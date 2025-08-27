@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 const NAV_LOGO = {
   url: '/',
-  title: 'Portfolio',
+  title: 'JONATHAN',
 };
 const NAV_ITEMS = [
   { name: 'Home', link: '/' },
