@@ -115,6 +115,7 @@ export function ProjectSaveModal() {
               placeholder="Brief description of your project"
               rows={3}
             />
+            <small className={project.description.length > 255 ? 'text-red-500' : 'text-gray-500'}>Character count : {project.description.length}/255</small>
           </div>
 
           {/* Tech Stacks Preview */}

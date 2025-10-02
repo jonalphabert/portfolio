@@ -18,7 +18,19 @@ export default function RootLayout({
     <html lang='en'>
       <body className='antialiased'>
         {children}
-        <Toaster />
+        <Toaster 
+          theme="light"
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: 'hsl(var(--background))',
+              color: 'hsl(var(--foreground))',
+              border: '1px solid hsl(var(--border))',
+            },
+            className: 'toast',
+            duration: 4000,
+          }}
+        />
       </body>
     </html>
   );

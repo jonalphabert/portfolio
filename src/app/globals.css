@@ -218,4 +218,29 @@
     opacity: 0.2; /* atur sesuai kebutuhan */
     z-index: -1;
   }
+
+  /* Toast Styling */
+  [data-sonner-toast][data-type="success"] {
+    background-color: #dcfce7 !important;
+    border-color: #16a34a !important;
+    color: #15803d !important;
+  }
+
+  [data-sonner-toast][data-type="error"] {
+    background-color: #fef2f2 !important;
+    border-color: #dc2626 !important;
+    color: #dc2626 !important;
+  }
+
+  [data-sonner-toast][data-type="info"] {
+    background-color: #dbeafe !important;
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+  }
+
+  [data-sonner-toast][data-type="warning"] {
+    background-color: #fef3c7 !important;
+    border-color: #d97706 !important;
+    color: #92400e !important;
+  }
 }

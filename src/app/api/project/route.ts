@@ -38,6 +38,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { title, slug, description, content, tech_stacks, user_id, project_url, project_github, project_thumbnail } = await request.json();
+    
+    // Validate description length
+    if (description && description.length > 255) {
+      return NextResponse.json(
+        { error: 'Project description must be 255 characters or less' },
+        { status: 400 }
+      );
+    }
 
     if (!title || !slug || !description || !content || !user_id) {
       return NextResponse.json(

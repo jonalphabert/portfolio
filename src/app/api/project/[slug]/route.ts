@@ -33,6 +33,14 @@ export async function PUT(
   try {
     const resolvedParams = await params;
     const { title, description, content, tech_stacks, project_url, project_github, project_thumbnail } = await request.json();
+    
+    // Validate description length
+    if (description && description.length > 255) {
+      return NextResponse.json(
+        { error: 'Project description must be 255 characters or less' },
+        { status: 400 }
+      );
+    }
 
     const project = await ProjectService.updateProject(resolvedParams.slug, {
       title,

@@ -184,6 +184,7 @@ export interface ProjectEditorPost {
   githubUrl: string;
   thumbnail: File | null;
   thumbnailUrl: string | null;
+  originalThumbnailId?: string | null;
   isPublished: boolean;
   isDraft: boolean;
   isFeatured: boolean;
