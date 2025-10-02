@@ -168,6 +168,10 @@ export class ProjectService {
   }
 
   static async createProject(data: CreateProjectData) {
+    if (data.description && data.description.length > 255) {
+      throw new Error('Project description must be 255 characters or less');
+    }
+    
     const query = `
       INSERT INTO project (
         project_title, project_slug, project_description, project_content, 
@@ -192,6 +196,10 @@ export class ProjectService {
   }
 
   static async updateProject(slug: string, data: UpdateProjectData) {
+    if (data.description && data.description.length > 255) {
+      throw new Error('Project description must be 255 characters or less');
+    }
+    
     const fields = [];
     const values = [];
     let paramIndex = 1;

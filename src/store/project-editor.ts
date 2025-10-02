@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { ProjectEditorPost } from '@/types';
+import { toast } from 'sonner';
 
 interface ProjectEditorState {
   // Project data
@@ -47,6 +48,7 @@ const initialProject: ProjectEditorPost = {
   githubUrl: '',
   thumbnail: null,
   thumbnailUrl: null,
+  originalThumbnailId: null,
   isPublished: false,
   isDraft: false,
   isFeatured: false,
@@ -147,6 +149,7 @@ export const useProjectEditor = create<ProjectEditorState>((set, get) => ({
           githubUrl: data.project_github || '',
           thumbnail: null, // File object can't be reconstructed from API
           thumbnailUrl: data.thumbnail ? data.thumbnail.image_path : null,
+          originalThumbnailId: data.project_thumbnail || null, // Store original thumbnail ID
           isPublished: data.project_status === 'published',
           isDraft: data.project_status === 'draft',
           isFeatured: data.is_featured || false,
@@ -168,12 +171,20 @@ export const useProjectEditor = create<ProjectEditorState>((set, get) => ({
 
   saveDraft: async () => {
     const { project } = get();
+    
+    // Validate description length
+    if (project.description && project.description.length > 255) {
+      toast.error('Project description must be 255 characters or less.');
+      return false;
+    }
+    
     set({ isLoading: true });
 
     try {
       let thumbnailImageId = null;
+      let shouldUpdateThumbnail = false;
 
-      // Upload thumbnail if exists
+      // Upload thumbnail if new file exists
       if (project.thumbnail) {
         const formData = new FormData();
         formData.append('type', 'file');
@@ -188,8 +199,11 @@ export const useProjectEditor = create<ProjectEditorState>((set, get) => ({
         if (imageResponse.ok) {
           const imageResult = await imageResponse.json();
           thumbnailImageId = imageResult.image_id;
+          shouldUpdateThumbnail = true;
         }
       }
+      // For edit mode: if no new thumbnail uploaded, don't update thumbnail field
+      // For new project: always include thumbnail field (even if null)
 
       // Get user ID from auth store
       const { useAuth } = await import('@/store/auth');
@@ -212,7 +226,7 @@ export const useProjectEditor = create<ProjectEditorState>((set, get) => ({
         tech_stacks: project.techStacks ? project.techStacks.split(',').map(tech => tech.trim()).filter(Boolean) : [],
         project_url: project.projectUrl || null,
         project_github: project.githubUrl || null,
-        project_thumbnail: thumbnailImageId,
+        project_thumbnail: shouldUpdateThumbnail ? thumbnailImageId : (isEdit ? project.originalThumbnailId : thumbnailImageId),
         ...(isEdit ? {} : { slug: project.slug, user_id: userId })
       };
 
@@ -231,13 +245,15 @@ export const useProjectEditor = create<ProjectEditorState>((set, get) => ({
         }));
 
         get().clearAllDrafts();
+        toast.success('Project saved successfully!');
         return true;
       } else {
-        throw new Error('Failed to save project');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save project');
       }
     } catch (error) {
       console.error('Error saving draft:', error);
-      alert(`Failed to save project: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to save project: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return false;
     } finally {
       set({ isLoading: false });
@@ -266,6 +282,7 @@ export const useProjectEditor = create<ProjectEditorState>((set, get) => ({
         }));
         
         get().clearAllDrafts();
+        toast.success('Project published successfully!');
         return true;
       } else {
         throw new Error('Failed to publish project');

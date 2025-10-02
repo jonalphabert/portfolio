@@ -146,7 +146,9 @@ export function ProjectEditor({ params }: ProjectEditorProps) {
                     value={project.description}
                     onChange={(e) => updateProjectData({ description: e.target.value })}
                     rows={3}
+                    maxLength={255}
                   />
+                  <small className={project.description.length > 255 ? 'text-red-500' : 'text-gray-500'}>Character count : {project.description.length}/255</small>
                 </div>
 
                 {/* Content */}

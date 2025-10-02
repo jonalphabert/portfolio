@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { BlogEditorPost } from '@/types';
+import { toast } from 'sonner';
 
 // Using BlogEditorPost from @/types
 
@@ -258,6 +259,7 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
         }));
 
         get().clearAllDrafts();
+        toast.success('Blog post saved successfully!');
         return true;
       } else {
         throw new Error('Failed to save post');
@@ -265,7 +267,7 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
     } catch (error) {
       console.error('Error saving draft:', error);
       // Show error to user
-      alert(`Failed to save blog post: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to save blog post: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return false;
     } finally {
       set({ isLoading: false });
@@ -291,6 +293,7 @@ export const useBlogEditor = create<BlogEditorState>((set, get) => ({
         set((state) => ({
           blogPost: { ...state.blogPost, isPublished: true, isDraft: false },
         }));
+        toast.success('Blog post published successfully!');
         return true;
       } else {
         throw new Error('Failed to publish post');
