@@ -105,7 +105,7 @@ const AnimatedIndicatorNavbar = () => {
         {/* Mobile Menu Popover */}
         <MobileNav activeItem={activeItem} setActiveItem={setActiveItem} />
 
-        <div className='hidden items-center gap-2 lg:flex'>
+        {/* <div className='hidden items-center gap-2 lg:flex'>
           <Button
             variant='outline'
             size='sm'
@@ -114,7 +114,7 @@ const AnimatedIndicatorNavbar = () => {
             <Download className='mr-2 h-4 w-4' />
             Resume
           </Button>
-        </div>
+        </div> */}
       </nav>
     </section>
   );
@@ -177,12 +177,12 @@ const MobileNav = ({
                 </a>
               </li>
             ))}
-            <li className='flex flex-col px-7 py-2'>
+            {/* <li className='flex flex-col px-7 py-2'>
               <Button variant='secondary' className='cursor-pointer'>
                 <Download className='mr-2 h-4 w-4' />
                 Resume
               </Button>
-            </li>
+            </li> */}
           </ul>
         </PopoverContent>
       </Popover>

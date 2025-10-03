@@ -4,7 +4,7 @@ const MinimalCenteredFooter = () => {
   const navigation = [
     { name: 'Projects', href: '/projects' },
     { name: 'Blog', href: '/blog' },
-    { name: 'Resume', href: '/resume' },
+    // { name: 'Resume', href: '/resume' },
   ];
 
   const social = [
