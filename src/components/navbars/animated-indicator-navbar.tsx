@@ -106,14 +106,14 @@ const AnimatedIndicatorNavbar = () => {
         <MobileNav activeItem={activeItem} setActiveItem={setActiveItem} />
 
         <div className='hidden items-center gap-2 lg:flex'>
-          <Button
+          {/* <Button
             variant='outline'
             size='sm'
             className='h-10 cursor-pointer py-2.5 text-sm font-normal'
           >
             <Download className='mr-2 h-4 w-4' />
             Resume
-          </Button>
+          </Button> */}
         </div>
       </nav>
     </section>
@@ -150,6 +150,19 @@ const MobileNav = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Lock scroll saat menu terbuka
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <div className='block lg:hidden'>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -159,7 +172,7 @@ const MobileNav = ({
 
         <PopoverContent
           align='end'
-          className='relative -top-4 -left-4 block w-screen max-w-md overflow-hidden rounded-xl p-0 lg:hidden'
+          className='relative block w-screen max-w-md overflow-hidden rounded-xl p-0 lg:hidden border-0 h-screen'
         >
           <ul className='bg-background text-foreground w-full py-4'>
             {NAV_ITEMS.map((navItem, idx) => (
@@ -177,12 +190,12 @@ const MobileNav = ({
                 </a>
               </li>
             ))}
-            <li className='flex flex-col px-7 py-2'>
+            {/* <li className='flex flex-col px-7 py-2'>
               <Button variant='secondary' className='cursor-pointer'>
                 <Download className='mr-2 h-4 w-4' />
                 Resume
               </Button>
-            </li>
+            </li> */}
           </ul>
         </PopoverContent>
       </Popover>

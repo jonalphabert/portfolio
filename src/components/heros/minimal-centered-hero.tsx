@@ -90,9 +90,9 @@ export function MinimalCenteredHero() {
               >
                 View Projects
               </a>
-              <a href='#' className='text-foreground text-sm/6 font-semibold'>
+              {/* <a href='#' className='text-foreground text-sm/6 font-semibold'>
                 Download Resume <span aria-hidden='true'>→</span>
-              </a>
+              </a> */}
             </div>
           </div>
         </div>
