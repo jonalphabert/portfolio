@@ -93,6 +93,9 @@ export async function generateMetadata({
     };
   }
 
+  const urlOgImage = post.featuredImage.replace('/upload/',
+    '/upload/w_1200,h_630,c_fill,q_auto,f_auto/');
+
   return {
     title: `${post.title} | Portfolio Website`,
     description: post.excerpt,
@@ -106,7 +109,7 @@ export async function generateMetadata({
       authors: [post.author.name],
       images: [
         {
-          url: post.featuredImage,
+          url: urlOgImage,
           width: 1200,
           height: 600,
           alt: post.title,
@@ -117,7 +120,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: post.title,
       description: post.excerpt,
-      images: [post.featuredImage],
+      images: [urlOgImage],
     },
   };
 }
