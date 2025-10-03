@@ -56,9 +56,6 @@ export function BlogPreviewContent({ post }: BlogPreviewContentProps) {
       <article className='container mx-auto max-w-4xl px-6'>
         <header className='mb-8'>
           <div className='mb-4 flex flex-wrap items-center gap-4'>
-            <Badge variant='secondary' className='text-sm'>
-              {post.category}
-            </Badge>
             <div className='text-muted-foreground flex items-center gap-4 text-sm'>
               <div className='flex items-center gap-1'>
                 <Calendar className='h-4 w-4' />
@@ -72,18 +69,16 @@ export function BlogPreviewContent({ post }: BlogPreviewContentProps) {
           </div>
 
           <h1 className='mb-4 text-4xl font-bold tracking-tight md:text-5xl'>{post.title}</h1>
-
-          <p className='text-muted-foreground mb-6 text-xl'>{post.excerpt}</p>
-
-          {/* Tags */}
-          <div className='mb-6 flex flex-wrap gap-2'>
-            {post.tags.map((tag) => (
-              <Badge key={tag} variant='outline' className='text-xs'>
-                <Tag className='mr-1 h-3 w-3' />
-                {tag}
+          
+          <div className='flex flex-wrap gap-1 mb-2'>
+            {post.category.split(',').map((category) => (
+              <Badge key={category} variant="outline" className="text-xs">
+                {category}
               </Badge>
             ))}
           </div>
+
+          <p className='text-muted-foreground mb-6 text-xl'>{post.excerpt}</p>
         </header>
 
         <Separator className='mb-8' />
@@ -93,7 +88,18 @@ export function BlogPreviewContent({ post }: BlogPreviewContentProps) {
           {processMarkdown(post.content)}
         </div>
 
-        <Separator className='my-12' />
+        {/* Tags */}
+          <div className='mb-6 flex flex-wrap gap-2 pt-12'>
+            <span className='text-sm font-semibold'>Tags:</span>
+            {post.tags.map((tag) => (
+              <Badge key={tag} variant='outline' className='text-xs'>
+                <Tag className='mr-1 h-3 w-3' />
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+        <Separator className='mt-4 mb-8' />
 
         {/* Author Bio */}
         <div className='mb-12'>

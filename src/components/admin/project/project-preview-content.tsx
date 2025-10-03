@@ -67,15 +67,6 @@ export function ProjectPreviewContent({ project }: ProjectPreviewContentProps) {
 
             <p className='text-muted-foreground mb-6 text-xl'>{project.description}</p>
 
-            {/* Tech Stack */}
-            <div className='mb-6 flex flex-wrap gap-2'>
-              {project.techStacks.map((tech) => (
-                <Badge key={tech} variant='outline' className='text-sm'>
-                  {tech}
-                </Badge>
-              ))}
-            </div>
-
             {/* Project Links */}
             <div className='flex items-center gap-4'>
               {project.projectUrl && (
@@ -105,6 +96,15 @@ export function ProjectPreviewContent({ project }: ProjectPreviewContentProps) {
           </div>
 
           <Separator className='my-12' />
+
+          {/* Tech Stack */}
+          <div className='mb-6 flex flex-wrap gap-2'>
+            {project.techStacks.map((tech) => (
+              <Badge key={tech} variant='outline' className='text-sm'>
+                {tech}
+              </Badge>
+            ))}
+          </div>
 
           {/* Author Bio */}
           <div className='mb-12'>
