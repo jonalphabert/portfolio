@@ -16,6 +16,9 @@ export async function GET(
       );
     }
 
+    // Increment view count
+    await PostService.incrementViews(resolvedParams.slug);
+
     // Transform for guest API
     const guestPost = {
       slug: post.blog_slug,
