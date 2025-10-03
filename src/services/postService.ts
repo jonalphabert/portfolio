@@ -407,6 +407,18 @@ export class PostService {
     return result.rows.map(this.mapRowToPost);
   }
 
+  static async incrementViews(slug: string) {
+    const query = `
+      UPDATE blog 
+      SET blog_views = blog_views + 1, updated_at = CURRENT_TIMESTAMP
+      WHERE blog_slug = $1 AND deleted_at IS NULL
+      RETURNING blog_views
+    `;
+
+    const result = await pool.query(query, [slug]);
+    return result.rows[0]?.blog_views || 0;
+  }
+
   static async getPostStats() {
     // Get total post
     const getTotalPost = `
