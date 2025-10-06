@@ -112,7 +112,7 @@ export async function generateMetadata({
         {
           url: urlOgImage,
           width: 1200,
-          height: 600,
+          height: 630,
           alt: post.title,
         },
       ],
