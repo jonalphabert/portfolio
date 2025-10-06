@@ -27,10 +27,16 @@ export async function GET(request: NextRequest) {
       technologies: project.project_tech_stacks || []
     }));
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       projects: guestProjects,
       total: guestProjects.length
     });
+    
+    // Add caching headers
+    response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=600'); // 5 min browser, 10 min CDN
+    response.headers.set('CDN-Cache-Control', 'public, max-age=600'); // 10 min CDN
+    
+    return response;
   } catch (error: unknown) {
     console.error('Get guest projects error:', error);
     return NextResponse.json(
