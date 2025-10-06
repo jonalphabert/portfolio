@@ -45,6 +45,7 @@ const HorizontalCarouselGallery = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [projects, setProjects] = useState<HorizontalCarouselGalleryItem[]>(items || []);
   const [loading, setLoading] = useState(!items);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!items) {
@@ -55,11 +56,36 @@ const HorizontalCarouselGallery = ({
   const fetchFeaturedProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/guest/project?featured=true&limit=5');
+      setError(null);
+      
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch('/api/guest/project?featured=true&limit=5', {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       setProjects(data.projects || []);
     } catch (error) {
       console.error('Error fetching featured projects:', error);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          setError('Request timeout. Please try again.');
+        } else {
+          setError('Failed to load projects. Please try again later.');
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -161,6 +187,31 @@ const HorizontalCarouselGallery = ({
                   </div>
                 </CarouselItem>
               ))
+            ) : error ? (
+              // Error state
+              <CarouselItem className='max-w-[320px] pl-[20px] lg:max-w-[360px]'>
+                <div className='group cursor-pointer rounded-xl'>
+                  <div className='group relative h-full min-h-[27rem] max-w-full overflow-hidden rounded-2xl md:aspect-5/4 lg:aspect-16/9 bg-muted flex items-center justify-center'>
+                    <div className='text-center p-6'>
+                      <p className='text-muted-foreground mb-4'>{error}</p>
+                      <Button onClick={fetchFeaturedProjects} variant='outline' size='sm'>
+                        Try Again
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            ) : projects.length === 0 ? (
+              // Empty state
+              <CarouselItem className='max-w-[320px] pl-[20px] lg:max-w-[360px]'>
+                <div className='group cursor-pointer rounded-xl'>
+                  <div className='group relative h-full min-h-[27rem] max-w-full overflow-hidden rounded-2xl md:aspect-5/4 lg:aspect-16/9 bg-muted flex items-center justify-center'>
+                    <div className='text-center p-6'>
+                      <p className='text-muted-foreground'>No featured projects available</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
             ) : (
               projects.map((item) => (
               <CarouselItem key={item.id} className='max-w-[320px] pl-[20px] lg:max-w-[360px]' onClick={() => handleProjectClick(item)}>
@@ -173,6 +224,10 @@ const HorizontalCarouselGallery = ({
                         width={480}
                         height={320}
                         className='absolute h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105'
+                        priority={currentSlide === projects.indexOf(item)}
+                        loading={currentSlide === projects.indexOf(item) ? 'eager' : 'lazy'}
+                        placeholder='blur'
+                        blurDataURL='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=='
                       />
 
                       <div className='absolute inset-0 h-full bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
