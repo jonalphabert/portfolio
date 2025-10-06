@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -8,8 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Calendar, Clock, Tag, Share2 } from 'lucide-react';
 import { processMarkdown } from '@/lib/markdown';
-import { PublicBlogPost, RelatedPost } from '@/types';
+import { CategoryHeader, PublicBlogPost, RelatedPost } from '@/types';
 import SubscribeSection from '../subscribe/subscribe-section';
+import { ShareModal } from './share-modal';
 
 interface BlogPostContentProps {
   post: PublicBlogPost;
@@ -17,6 +19,8 @@ interface BlogPostContentProps {
 }
 
 export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  
   // Format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -25,6 +29,9 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
       day: 'numeric',
     });
   };
+
+  // Get current URL
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   return (
     <div className='bg-background min-h-screen'>
@@ -72,9 +79,9 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
             <h1 className='mb-4 text-4xl font-bold tracking-tight md:text-5xl'>{post.title}</h1>
 
             <div className='flex flex-wrap gap-1 mb-2'>
-              {post.category.split(',').map((category) => (
-                <Badge key={category} variant="outline" className="text-xs">
-                  {category}
+              {post.categories.map((category : CategoryHeader) => (
+                <Badge key={category.category_id} variant="outline" className="text-xs">
+                  {category.category_name}
                 </Badge>
               ))}
             </div>
@@ -85,7 +92,11 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
             {/* Share Buttons */}
             <div className='flex items-center gap-2'>
               <span className='text-muted-foreground text-sm'>Share:</span>
-              <Button variant='outline' size='sm'>
+              <Button 
+                variant='outline' 
+                size='sm'
+                onClick={() => setIsShareModalOpen(true)}
+              >
                 <Share2 className='mr-1 h-4 w-4' />
                 Share
               </Button>
@@ -179,6 +190,14 @@ export function BlogPostContent({ post, relatedPosts }: BlogPostContentProps) {
           )}
         </article>
       </main>
+      
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        title={post.title}
+        url={currentUrl}
+      />
     </div>
   );
 }

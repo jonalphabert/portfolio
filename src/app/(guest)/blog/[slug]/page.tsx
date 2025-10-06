@@ -26,7 +26,7 @@ async function getBlogPost(slug: string): Promise<PublicBlogPost | null> {
       excerpt: data.description || '',
       publishedDate: new Date(data.publishedDate).toISOString().split('T')[0],
       readTime: Math.ceil(data.content.split(' ').length / 200) || 5,
-      category: data.tags && data.tags.length > 0 ? data.tags[0] : 'Uncategorized',
+      categories: data.categories,
       author: {
         name: data.author.name,
         avatar: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop',

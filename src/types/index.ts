@@ -80,6 +80,12 @@ export interface RelatedPost {
   featuredImage: string;
 }
 
+export interface CategoryHeader {
+  category_id: string;
+  category_name: string;
+  category_slug: string;
+}
+
 // Public Blog Post Types (for guest pages)
 export interface PublicBlogPost {
   slug: string;
@@ -88,7 +94,7 @@ export interface PublicBlogPost {
   excerpt: string;
   publishedDate: string;
   readTime: number;
-  category: string;
+  categories: CategoryHeader[];
   author: {
     name: string;
     avatar: string;
