@@ -24,6 +24,7 @@ export async function GET(
       slug: post.blog_slug,
       title: post.blog_title,
       description: post.blog_description,
+      categories: post.categories,
       content: post.blog_content,
       tags: post.blog_tags || [],
       publishedDate: post.published_at || post.created_at,
